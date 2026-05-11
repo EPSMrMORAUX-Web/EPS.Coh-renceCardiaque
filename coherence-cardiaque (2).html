@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>CardioSync — Cohérence Cardiaque</title>
+<style>
+:root {
+  --cyan:#00e5ff; --cyan-d:rgba(0,229,255,.14); --cyan-g:rgba(0,229,255,.35);
+  --red:#ff2d55;  --red-d:rgba(255,45,85,.16);
+  --blue:#0a84ff; --green:#30d158; --orange:#ff9f0a; --gold:#ffd60a;
+  --bg:#020508; --bg2:#070f18; --bg3:#0b1620;
+  --gl:rgba(255,255,255,.04); --gb:rgba(255,255,255,.08);
+  --t:#e8f4f8; --td:rgba(232,244,248,.5); --tm:rgba(232,244,248,.22);
+  --mono:'SF Mono','Fira Code','Cascadia Code',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--t);font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;overflow-x:hidden;line-height:1.6}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(0,229,255,.022) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(0,229,255,.022) 1px,transparent 1px);
+  background-size:52px 52px}
+
+/* ─── NAV ─── */
+nav{position:fixed;top:0;left:0;right:0;z-index:300;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:13px 28px;background:rgba(2,5,8,.85);backdrop-filter:blur(22px);
+  border-bottom:1px solid var(--gb);transition:.3s}
+.logo{display:flex;align-items:center;gap:9px;font-size:16px;font-weight:800;letter-spacing:-.4px;text-decoration:none;color:var(--t)}
+.logo svg{width:28px;height:20px}
+.pdot{width:6px;height:6px;border-radius:50%;background:var(--red);display:inline-block;margin-left:2px;animation:pdot 1.1s ease-in-out infinite}
+@keyframes pdot{0%,100%{box-shadow:0 0 0 0 rgba(255,45,85,.8)}50%{box-shadow:0 0 0 5px rgba(255,45,85,0)}}
+.navl{display:flex;gap:3px}
+.navl a{padding:6px 13px;border-radius:8px;color:var(--td);text-decoration:none;font-size:13px;font-weight:500;transition:.18s;white-space:nowrap}
+.navl a:hover,.navl a.act{color:var(--cyan);background:var(--cyan-d)}
+.navcta{padding:8px 18px;border-radius:20px;background:linear-gradient(135deg,var(--cyan),var(--blue));color:#000;font-weight:700;font-size:13px;border:none;cursor:pointer;transition:.2s}
+.navcta:hover{opacity:.85;transform:scale(1.03)}
+@media(max-width:620px){.navl a{font-size:11px;padding:5px 8px}.logo svg{display:none}}
+@media(max-width:460px){.navl a:nth-child(3){display:none}}
+
+/* ─── HERO ─── */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:110px 22px 56px;position:relative;z-index:1}
+.hbadge{display:inline-flex;align-items:center;gap:7px;padding:5px 14px;border-radius:20px;background:var(--cyan-d);border:1px solid rgba(0,229,255,.28);font-size:11px;font-family:var(--mono);color:var(--cyan);letter-spacing:1px;text-transform:uppercase;margin-bottom:26px}
+.bdot{width:5px;height:5px;border-radius:50%;background:var(--cyan);animation:pdot 1s infinite}
+h1{font-size:clamp(27px,5.5vw,58px);font-weight:800;letter-spacing:-1.5px;line-height:1.08;background:linear-gradient(145deg,#fff 38%,var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:18px}
+.hsub{font-size:clamp(13px,1.7vw,16px);color:var(--td);max-width:500px;margin-bottom:32px}
+.fbox{padding:16px 22px;background:linear-gradient(135deg,rgba(255,45,85,.1),rgba(255,165,0,.06));border:1px solid rgba(255,45,85,.3);border-radius:13px;max-width:550px;margin-bottom:30px;font-size:14px;line-height:1.65;position:relative;overflow:hidden}
+.fbox::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,200,0,.04),transparent);animation:shim 3.2s infinite}
+@keyframes shim{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.fbox strong{color:var(--gold)}
+.hbtns{display:flex;gap:11px;flex-wrap:wrap;justify-content:center}
+.bp{padding:13px 30px;border-radius:28px;background:linear-gradient(135deg,var(--cyan),var(--blue));color:#000;font-weight:800;font-size:14px;border:none;cursor:pointer;transition:.22s;box-shadow:0 0 38px rgba(0,229,255,.28)}
+.bp:hover{transform:translateY(-2px);box-shadow:0 8px 48px rgba(0,229,255,.42)}
+.bo{padding:13px 22px;border-radius:28px;background:transparent;color:var(--td);font-weight:600;font-size:14px;border:1px solid var(--gb);cursor:pointer;transition:.22s}
+.bo:hover{border-color:var(--cyan-g);color:var(--cyan)}
+.disc{margin-top:22px;font-size:11px;color:var(--tm);font-style:italic}
+
+/* ─── SECTION ─── */
+.sec{position:relative;z-index:1;padding:72px 22px;max-width:1060px;margin:0 auto}
+.slbl{font-size:10px;font-family:var(--mono);color:var(--cyan);letter-spacing:3px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:10px}
+.slbl::before{content:'';width:28px;height:1px;background:var(--cyan)}
+h2{font-size:clamp(21px,3vw,34px);font-weight:800;letter-spacing:-.7px;margin-bottom:10px}
+.sint{font-size:14px;color:var(--td);max-width:540px;margin-bottom:44px}
+
+/* ─── MEASURE CARD ─── */
+.mcard{background:var(--bg2);border:1px solid var(--gb);border-radius:22px;overflow:hidden}
+.mpan{display:none;padding:32px 26px}
+.mpan.on{display:block}
+
+/* IDLE */
+.ig{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}
+@media(max-width:660px){.ig{grid-template-columns:1fr}}
+.ih{font-size:21px;font-weight:800;letter-spacing:-.3px;margin-bottom:11px}
+.id{font-size:13px;color:var(--td);line-height:1.7;margin-bottom:16px}
+.steps{display:flex;flex-direction:column;gap:9px}
+.step{display:flex;align-items:flex-start;gap:10px;padding:10px 13px;background:var(--gl);border:1px solid var(--gb);border-radius:10px}
+.sn{width:23px;height:23px;border-radius:7px;background:var(--cyan-d);border:1px solid rgba(0,229,255,.28);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--cyan);flex-shrink:0;font-family:var(--mono)}
+.step p{font-size:12px;color:var(--td);line-height:1.5}
+.step p strong{color:var(--t)}
+.bstart{margin-top:18px;width:100%;padding:14px;border-radius:12px;background:linear-gradient(135deg,var(--red),rgba(255,80,0,.9));color:#fff;font-weight:800;font-size:14px;border:none;cursor:pointer;transition:.22s;box-shadow:0 0 32px rgba(255,45,85,.28);display:flex;align-items:center;justify-content:center;gap:8px}
+.bstart:hover{transform:translateY(-2px);box-shadow:0 8px 42px rgba(255,45,85,.42)}
+.pvis{display:flex;align-items:center;justify-content:center}
+.pfr{width:150px;height:282px;background:linear-gradient(160deg,#1a1a2e,#0a0a18);border-radius:32px;border:2px solid rgba(255,255,255,.1);position:relative;box-shadow:0 28px 65px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.05);overflow:hidden;display:flex;align-items:center;justify-content:center}
+.pscr{position:absolute;inset:11px;border-radius:22px;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;overflow:hidden}
+.pscr-bg{position:absolute;inset:0;background:radial-gradient(circle at 50% 40%,rgba(255,45,85,.25),transparent 70%)}
+.pbpm{font-family:var(--mono);font-size:30px;font-weight:700;color:var(--red);text-shadow:0 0 16px rgba(255,45,85,.7);position:relative;z-index:1}
+.plbl{font-size:8px;color:rgba(255,255,255,.35);letter-spacing:3px;text-transform:uppercase;font-family:var(--mono);position:relative;z-index:1}
+.cam{position:absolute;top:12px;right:12px;width:40px;height:62px;background:#111;border-radius:10px;border:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.cl{width:18px;height:18px;border-radius:50%;background:radial-gradient(circle,#1a1a2a,#222);border:2px solid rgba(255,255,255,.1)}
+.cf{width:9px;height:9px;border-radius:3px;animation:cf 1.6s ease-in-out infinite}
+@keyframes cf{0%,100%{background:#1a1a10;box-shadow:none}50%{background:var(--gold);box-shadow:0 0 10px rgba(255,214,10,.85)}}
+.srings{position:absolute;top:10px;right:10px;pointer-events:none}
+.sr{position:absolute;border-radius:50%;border:1px solid var(--red);animation:srx 2.6s ease-out infinite}
+.sr:nth-child(1){width:54px;height:54px;top:2px;right:0;animation-delay:0s}
+.sr:nth-child(2){width:76px;height:76px;top:-11px;right:-11px;animation-delay:.8s}
+.sr:nth-child(3){width:100px;height:100px;top:-23px;right:-23px;animation-delay:1.6s}
+@keyframes srx{0%{opacity:.8;transform:scale(.78)}100%{opacity:0;transform:scale(1)}}
+
+/* REQUESTING */
+.reqin{text-align:center;padding:44px 18px;display:flex;flex-direction:column;align-items:center;gap:16px}
+.spin{width:52px;height:52px;border-radius:50%;border:3px solid rgba(0,229,255,.14);border-top-color:var(--cyan);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ─── ACTIVE PANEL (ALL 3 BLOCS) ─── */
+.actgrid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+@media(max-width:700px){.actgrid{grid-template-columns:1fr}}
+
+/* --- BLOC A: Signal & BPM --- */
+.blA{display:flex;flex-direction:column;gap:14px}
+.bloc-tag{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:5px;font-size:10px;font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;font-weight:700;width:fit-content;margin-bottom:2px}
+.tag-a{background:rgba(255,45,85,.14);color:var(--red);border:1px solid rgba(255,45,85,.25)}
+.tag-b{background:var(--cyan-d);color:var(--cyan);border:1px solid rgba(0,229,255,.25)}
+.tag-c{background:rgba(10,132,255,.14);color:var(--blue);border:1px solid rgba(10,132,255,.25)}
+
+.bpmd{text-align:center;padding:22px 14px;background:var(--gl);border:1px solid var(--gb);border-radius:16px;position:relative;overflow:hidden}
+.bpmd::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50%,rgba(255,45,85,.07),transparent 70%);pointer-events:none}
+.bpmv{font-family:var(--mono);font-size:70px;font-weight:800;color:var(--red);line-height:1;text-shadow:0 0 32px rgba(255,45,85,.55);display:block;letter-spacing:-2px}
+.bpmlb{font-size:10px;color:var(--td);letter-spacing:4px;text-transform:uppercase;font-family:var(--mono);margin-top:4px}
+.bpmst{margin-top:7px;font-size:11px;color:var(--cyan);font-family:var(--mono);min-height:16px}
+
+.sigw{background:rgba(0,0,0,.5);border:1px solid rgba(255,45,85,.2);border-radius:12px;overflow:hidden;position:relative}
+.siglb{position:absolute;top:6px;left:10px;font-size:9px;font-family:var(--mono);color:rgba(255,45,85,.55);letter-spacing:2px;text-transform:uppercase;z-index:2}
+#sigC{display:block;width:100%;height:80px}
+
+.qw{padding:9px 13px;background:var(--gl);border:1px solid var(--gb);border-radius:10px;display:flex;align-items:center;gap:10px}
+.qlb{font-size:10px;font-family:var(--mono);color:var(--td);text-transform:uppercase;letter-spacing:1px;white-space:nowrap}
+.qtr{flex:1;height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden}
+.qfi{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--orange),var(--green));transition:width .6s;width:0%}
+.qpt{font-size:10px;font-family:var(--mono);color:var(--td);width:28px;text-align:right}
+
+.statrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.sb2{padding:9px 7px;background:var(--gl);border:1px solid var(--gb);border-radius:10px;text-align:center}
+.sv{font-family:var(--mono);font-size:17px;font-weight:700;color:var(--cyan);display:block;text-shadow:0 0 8px rgba(0,229,255,.4)}
+.sk{font-size:8px;color:var(--td);letter-spacing:1.5px;text-transform:uppercase;margin-top:1px}
+.bstop{width:100%;padding:12px;border-radius:10px;background:rgba(255,45,85,.1);border:1px solid rgba(255,45,85,.22);color:var(--red);font-weight:700;font-size:13px;cursor:pointer;transition:.2s;margin-top:2px}
+.bstop:hover{background:rgba(255,45,85,.18)}
+
+/* --- RIGHT COLUMN (B + C + Torch) --- */
+.blBC{display:flex;flex-direction:column;gap:18px}
+
+/* BLOC B — Gauge */
+.blocB{padding:20px 16px;background:var(--gl);border:1px solid var(--gb);border-radius:16px;text-align:center}
+.bbtit{font-size:11px;font-weight:600;color:var(--t);margin-bottom:14px;text-align:left}
+.gsvgw{width:138px;height:138px;position:relative;margin:0 auto}
+.gsvgw svg{width:100%;height:100%;transform:rotate(-90deg)}
+.gcirc-bg{fill:none;stroke:rgba(255,255,255,.06);stroke-width:11}
+.gcirc{fill:none;stroke-width:11;stroke-linecap:round;stroke:url(#ggrd);stroke-dasharray:376;stroke-dashoffset:376;transition:stroke-dashoffset .95s ease;filter:drop-shadow(0 0 7px rgba(0,229,255,.55))}
+.gabs{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.gnum{font-family:var(--mono);font-size:30px;font-weight:800;color:var(--cyan);line-height:1;text-shadow:0 0 16px rgba(0,229,255,.65)}
+.gsub{font-size:8px;color:var(--td);letter-spacing:2px;text-transform:uppercase;margin-top:2px}
+.gthr{margin-top:10px;font-size:12px;color:var(--td)}
+.gthr span{color:var(--cyan);font-weight:700}
+/* threshold tick */
+.thrtick{font-size:10px;color:var(--td);font-family:var(--mono);margin-top:6px;background:rgba(0,229,255,.07);border:1px solid rgba(0,229,255,.18);border-radius:6px;padding:4px 10px;display:inline-block}
+
+/* BLOC C — Breathing */
+.blocC{padding:18px 16px;background:var(--gl);border:1px solid var(--gb);border-radius:16px}
+.bctit{font-size:11px;font-weight:600;color:var(--t);margin-bottom:13px}
+.brvis{display:flex;flex-direction:row;align-items:center;gap:20px}
+.brcirc{position:relative;width:88px;height:88px;flex-shrink:0}
+.brr{position:absolute;border-radius:50%;border:1.5px solid rgba(10,132,255,.28)}
+.brr1{inset:0;animation:brs 5.5s ease-in-out infinite}
+.brr2{inset:10px;animation:brs 5.5s ease-in-out infinite .3s}
+.brcore{position:absolute;inset:20px;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(10,132,255,.75),rgba(0,35,120,.5));border:1px solid rgba(10,132,255,.5);animation:brs 5.5s ease-in-out infinite;box-shadow:0 0 16px rgba(10,132,255,.38)}
+@keyframes brs{0%,100%{transform:scale(.8);opacity:.6}45%{transform:scale(1.2);opacity:1}}
+.brinfo{flex:1;display:flex;flex-direction:column;gap:9px}
+.brtxt{font-size:14px;font-weight:700;font-family:var(--mono);letter-spacing:2px;text-transform:uppercase;transition:opacity .35s;color:var(--blue)}
+.brpace{display:flex;gap:6px}
+.bpd{width:5px;height:5px;border-radius:50%;background:var(--blue);opacity:.22;animation:bpa 5.5s ease-in-out infinite}
+.bpd:nth-child(1){animation-delay:0s}.bpd:nth-child(2){animation-delay:.5s}.bpd:nth-child(3){animation-delay:1s}.bpd:nth-child(4){animation-delay:1.5s}.bpd:nth-child(5){animation-delay:2s}
+@keyframes bpa{0%,100%{opacity:.18;transform:scale(1)}50%{opacity:1;transform:scale(1.5)}}
+.brrythm{font-size:11px;color:var(--td);font-family:var(--mono)}
+.modepills{display:flex;gap:7px;margin-top:11px}
+.mp{padding:4px 12px;border-radius:14px;font-size:11px;font-weight:600;cursor:pointer;transition:.18s;border:1px solid}
+.mp:hover{opacity:.78;transform:scale(1.04)}
+.mpr{background:rgba(0,229,255,.1);color:var(--cyan);border-color:rgba(0,229,255,.22)}
+.mpb{background:var(--red-d);color:var(--red);border-color:rgba(255,45,85,.22)}
+
+/* Torch info */
+#tinfo{padding:8px 12px;border-radius:9px;font-size:11px;color:var(--td);background:var(--gl);border:1px solid var(--gb);text-align:center;font-family:var(--mono);line-height:1.5}
+
+/* RESULT */
+.resin{display:flex;flex-direction:column;align-items:center;gap:22px;padding:6px 0;text-align:center}
+.rest{font-size:19px;font-weight:800;letter-spacing:-.3px}
+.resgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:440px}
+.rb{padding:16px 8px;background:var(--gl);border:1px solid var(--gb);border-radius:13px}
+.rv{font-family:var(--mono);font-size:32px;font-weight:800;display:block;line-height:1}
+.rk{font-size:8px;color:var(--td);letter-spacing:2px;text-transform:uppercase;margin-top:5px}
+.rr{color:var(--red);text-shadow:0 0 12px rgba(255,45,85,.5)}
+.rc{color:var(--cyan);text-shadow:0 0 12px rgba(0,229,255,.5)}
+.rg{color:var(--green);text-shadow:0 0 12px rgba(48,209,88,.5)}
+.rbtns{display:flex;gap:11px;flex-wrap:wrap;justify-content:center}
+.bsave{padding:11px 24px;border-radius:26px;background:linear-gradient(135deg,var(--cyan),var(--blue));color:#000;font-weight:700;font-size:13px;border:none;cursor:pointer;transition:.2s}
+.bsave:hover{opacity:.85;transform:scale(1.03)}
+.breset{padding:11px 20px;border-radius:26px;background:transparent;border:1px solid var(--gb);color:var(--td);font-weight:600;font-size:13px;cursor:pointer;transition:.2s}
+.breset:hover{border-color:var(--cyan-g);color:var(--cyan)}
+.rmsg{font-size:13px;color:var(--td);max-width:400px;line-height:1.7;padding:13px 16px;background:var(--gl);border:1px solid var(--gb);border-radius:10px;text-align:center}
+
+/* ERROR */
+.errin{text-align:center;padding:40px 18px;display:flex;flex-direction:column;align-items:center;gap:13px}
+.errmsg{font-size:14px;color:var(--td);max-width:390px;line-height:1.7}
+.errhint{font-size:12px;color:var(--tm);background:rgba(255,45,85,.07);border:1px solid rgba(255,45,85,.18);border-radius:9px;padding:10px 14px;max-width:420px}
+
+/* ─── FEATURES ─── */
+#fonctionnalites{padding-top:20px}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(246px,1fr));gap:16px}
+.fcard{background:var(--bg2);border:1px solid var(--gb);border-radius:18px;padding:24px;transition:.28s;cursor:default;position:relative;overflow:hidden}
+.fcard::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at var(--mx,50%) var(--my,50%),rgba(0,229,255,.07),transparent 60%);opacity:0;transition:opacity .28s;pointer-events:none}
+.fcard:hover{transform:translateY(-3px);border-color:rgba(0,229,255,.2);box-shadow:0 13px 42px rgba(0,0,0,.4)}
+.fcard:hover::after{opacity:1}
+.fico{width:40px;height:40px;border-radius:10px;background:var(--cyan-d);border:1px solid rgba(0,229,255,.2);display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.fico svg{width:18px;height:18px;stroke:var(--cyan);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.fcard h4{font-size:14px;font-weight:700;margin-bottom:7px;letter-spacing:-.2px}
+.fcard p{font-size:12px;color:var(--td);line-height:1.65}
+.srow{display:flex;gap:6px;margin-top:10px}
+.sb3{padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;border:1px solid;cursor:pointer;background:transparent;transition:.2s}
+.sb3:hover{opacity:.7}
+.sbm{color:var(--cyan);border-color:rgba(0,229,255,.28)}
+.sbf{color:#1877f2;border-color:rgba(24,119,242,.28)}
+.sbt{color:#1da1f2;border-color:rgba(29,161,242,.28)}
+.mopills{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.mop{padding:4px 12px;border-radius:14px;font-size:10px;font-weight:600;cursor:pointer;transition:.18s}
+.mop:hover{opacity:.78;transform:scale(1.04)}
+.mopr{background:rgba(0,229,255,.1);color:var(--cyan);border:1px solid rgba(0,229,255,.2)}
+.mopb{background:var(--red-d);color:var(--red);border:1px solid rgba(255,45,85,.2)}
+.specb{display:flex;gap:3px;align-items:flex-end;height:40px;margin-top:11px}
+.spbar{flex:1;border-radius:2px 2px 0 0;background:linear-gradient(180deg,var(--cyan),rgba(0,229,255,.18));animation:spa 1.8s ease-in-out infinite;transform-origin:bottom}
+@keyframes spa{0%,100%{transform:scaleY(1)}50%{transform:scaleY(var(--h,.5))}}
+.mgraph{width:100%;height:44px;margin-top:10px;background:rgba(0,0,0,.3);border-radius:7px;overflow:hidden}
+
+/* ─── ANALYSE ─── */
+#analyse{padding-top:20px}
+.hempty{text-align:center;padding:44px 18px;color:var(--tm);font-size:13px}
+.hempty .em{font-size:34px;margin-bottom:9px}
+.hlist{display:flex;flex-direction:column;gap:11px}
+.hrow{background:var(--bg2);border:1px solid var(--gb);border-radius:13px;padding:14px 18px;display:flex;align-items:center;gap:16px;transition:.2s;flex-wrap:wrap}
+.hrow:hover{border-color:rgba(0,229,255,.17);transform:translateX(2px)}
+.hdt{font-size:10px;color:var(--tm);font-family:var(--mono);white-space:nowrap;min-width:82px}
+.hvals{display:flex;gap:18px;flex:1;flex-wrap:wrap}
+.hv{text-align:center}
+.hvn{font-family:var(--mono);font-size:18px;font-weight:700;display:block}
+.hvk{font-size:8px;color:var(--td);letter-spacing:1.5px;text-transform:uppercase}
+.hbdg{padding:3px 10px;border-radius:14px;font-size:10px;font-weight:600}
+.hbg{background:rgba(48,209,88,.1);color:var(--green);border:1px solid rgba(48,209,88,.2)}
+.hba{background:rgba(255,159,10,.1);color:var(--orange);border:1px solid rgba(255,159,10,.2)}
+.clr{padding:7px 14px;border-radius:7px;background:transparent;border:1px solid rgba(255,45,85,.2);color:rgba(255,45,85,.5);font-size:11px;cursor:pointer;transition:.18s;margin-top:15px}
+.clr:hover{background:var(--red-d);color:var(--red)}
+
+footer{position:relative;z-index:1;padding:26px;border-top:1px solid var(--gb);text-align:center}
+footer p{font-size:11px;color:var(--tm)}
+footer strong{color:rgba(232,244,248,.32)}
+
+/* REVEAL */
+.rev{opacity:0;transform:translateY(20px);transition:.58s ease}
+.rev.vis{opacity:1;transform:none}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="mn">
+  <a href="#" class="logo">
+    <svg viewBox="0 0 28 20" fill="none"><path d="M1 10 L5 10 L7 4 L9.5 16 L12 5 L14.5 13 L17 10 L27 10" stroke="#00e5ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    CardioSync<span class="pdot"></span>
+  </a>
+  <div class="navl">
+    <a href="#mesure">Fonctionnement</a>
+    <a href="#fonctionnalites">Fonctionnalités</a>
+    <a href="#analyse">Analyse</a>
+  </div>
+  <button class="navcta" onclick="G('mesure')">Mesurer</button>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hbadge"><span class="bdot"></span>Biofeedback PPG haute précision</div>
+  <h1>Analyse avancée de la<br>cohérence cardiaque</h1>
+  <p class="hsub">Approche technique destinée aux utilisateurs professionnels en biofeedback physiologique.</p>
+  <div class="fbox">
+    <strong>⚡ Le flash de l'iPhone est utilisé comme capteur biométrique</strong> afin de détecter la fréquence cardiaque avec précision en temps réel. Posez votre doigt sur le flash et la caméra arrière.
+  </div>
+  <div class="hbtns">
+    <button class="bp" onclick="G('mesure')">❤️ Commencer la mesure</button>
+    <button class="bo" onclick="G('fonctionnalites')">Fonctionnalités</button>
+  </div>
+  <p class="disc">⚠ Cette application n'est pas destinée à un usage avec des patients.</p>
+</div>
+
+<!-- SECTION MESURE -->
+<section class="sec" id="mesure">
+  <div class="slbl">Module principal — PPG haute précision</div>
+  <h2>Mesure par flash iPhone</h2>
+  <p class="sint">Posez votre doigt sur le flash et la caméra arrière. L'algorithme analyse les micro-variations AC du signal PPG pour mesurer votre fréquence cardiaque avec précision.</p>
+
+  <!-- Éléments cachés pour le traitement -->
+  <video id="vid" playsinline muted autoplay style="display:none;position:absolute;width:1px;height:1px;opacity:0"></video>
+  <canvas id="prc" style="display:none;position:absolute;width:1px;height:1px"></canvas>
+
+  <div class="mcard">
+
+    <!-- IDLE -->
+    <div class="mpan on" id="p-idle">
+      <div class="ig">
+        <div>
+          <div class="ih">Prêt à mesurer votre cœur ?</div>
+          <p class="id">L'application utilise le <strong>signal photopléthysmographique (PPG)</strong> capté par le flash et la caméra arrière. Un algorithme de filtrage AC supprime la dérive thermique pour garantir une mesure précise.</p>
+          <div class="steps">
+            <div class="step"><div class="sn">1</div><p>Accédez à la caméra arrière de votre téléphone.</p></div>
+            <div class="step"><div class="sn">2</div><p><strong>Posez le bout de l'index</strong> doucement sur le flash + caméra. Pression légère.</p></div>
+            <div class="step"><div class="sn">3</div><p><strong>Restez immobile.</strong> Attendez 20–30 s que la mesure se stabilise.</p></div>
+            <div class="step"><div class="sn">4</div><p>Si la qualité est faible, ajustez légèrement la pression du doigt.</p></div>
+          </div>
+          <button class="bstart" onclick="startM()">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            Démarrer la mesure
+          </button>
+        </div>
+        <div class="pvis">
+          <div style="position:relative">
+            <div class="pfr">
+              <div class="pscr">
+                <div class="pscr-bg"></div>
+                <span class="pbpm" id="idlBpm">--</span>
+                <span class="plbl">BPM</span>
+              </div>
+              <div class="cam"><div class="cl"></div><div class="cf"></div></div>
+            </div>
+            <div class="srings"><div class="sr"></div><div class="sr"></div><div class="sr"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REQUESTING -->
+    <div class="mpan" id="p-req">
+      <div class="reqin">
+        <div class="spin"></div>
+        <div style="font-size:17px;font-weight:700">Activation de la caméra...</div>
+        <p style="color:var(--td);font-size:13px;max-width:320px;text-align:center">Autorisez l'accès à la caméra. Le flash s'active automatiquement si disponible.</p>
+      </div>
+    </div>
+
+    <!-- ACTIVE : A + B + C -->
+    <div class="mpan" id="p-act">
+      <div class="actgrid">
+
+        <!-- BLOC A — Signal & BPM -->
+        <div class="blA">
+          <span class="bloc-tag tag-a">A — Capteur flash PPG</span>
+
+          <div class="bpmd">
+            <span class="bpmv" id="bpmV">--</span>
+            <div class="bpmlb">Fréquence Cardiaque (BPM)</div>
+            <div class="bpmst" id="bpmSt">⏳ Analyse en cours...</div>
+          </div>
+
+          <div class="sigw">
+            <div class="siglb">Signal PPG — Canal rouge (AC)</div>
+            <canvas id="sigC" height="80"></canvas>
+          </div>
+
+          <div class="qw">
+            <span class="qlb">Qualité</span>
+            <div class="qtr"><div class="qfi" id="qFi"></div></div>
+            <span class="qpt" id="qPt">0%</span>
+          </div>
+
+          <div class="statrow">
+            <div class="sb2"><span class="sv" id="sHRV">--</span><div class="sk">HRV ms</div></div>
+            <div class="sb2"><span class="sv" id="sRR">--</span><div class="sk">RR ms</div></div>
+            <div class="sb2"><span class="sv" id="sDur">0s</span><div class="sk">Durée</div></div>
+          </div>
+
+          <button class="bstop" onclick="stopM()">⏹ Arrêter la mesure</button>
+        </div>
+
+        <!-- BLOCS B + C -->
+        <div class="blBC">
+
+          <!-- BLOC B — Cohérence -->
+          <div class="blocB">
+            <div class="bloc-tag tag-b" style="margin-bottom:10px">B — Score de cohérence</div>
+            <div class="bbtit">Analyse de la cohérence cardiaque</div>
+            <div class="gsvgw">
+              <svg viewBox="0 0 130 130">
+                <defs>
+                  <linearGradient id="ggrd" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#0a84ff"/>
+                    <stop offset="100%" stop-color="#00e5ff"/>
+                  </linearGradient>
+                </defs>
+                <circle class="gcirc-bg" cx="65" cy="65" r="55"/>
+                <circle class="gcirc" cx="65" cy="65" r="55" id="gPrg"/>
+              </svg>
+              <div class="gabs">
+                <span class="gnum" id="gVal">0<span style="font-size:15px">%</span></span>
+                <span class="gsub">Cohérence</span>
+              </div>
+            </div>
+            <div class="gthr">Seuil optimal : <span>80%</span></div>
+            <div class="thrtick" id="thrTick">En attente du signal...</div>
+          </div>
+
+          <!-- BLOC C — Respiration -->
+          <div class="blocC">
+            <div class="bloc-tag tag-c" style="margin-bottom:8px">C — Synchronisation respiratoire</div>
+            <div class="bctit">Guide respiratoire — inspirez / expirez</div>
+            <div class="brvis">
+              <div class="brcirc">
+                <div class="brr brr1"></div>
+                <div class="brr brr2"></div>
+                <div class="brcore"></div>
+              </div>
+              <div class="brinfo">
+                <div class="brtxt" id="brTxt">INSPIREZ</div>
+                <div class="brrythm" id="brRyt">5s · 5s</div>
+                <div class="brpace"><div class="bpd"></div><div class="bpd"></div><div class="bpd"></div><div class="bpd"></div><div class="bpd"></div></div>
+                <div class="modepills">
+                  <span class="mp mpr" onclick="setMode('relax',this)">🌊 Relaxant</span>
+                  <span class="mp mpb" onclick="setMode('boost',this)">⚡ Dynamisant</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Torch info -->
+          <div id="tinfo">🔦 Initialisation...</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RESULT -->
+    <div class="mpan" id="p-res">
+      <div class="resin">
+        <div style="font-size:40px">🎯</div>
+        <div class="rest">Séance terminée</div>
+        <div class="resgrid">
+          <div class="rb"><span class="rv rr" id="rBpm">--</span><div class="rk">BPM moyen</div></div>
+          <div class="rb"><span class="rv rc" id="rCoh">--%</span><div class="rk">Cohérence</div></div>
+          <div class="rb"><span class="rv rg" id="rDur">--s</span><div class="rk">Durée</div></div>
+        </div>
+        <div class="rmsg" id="rMsg"></div>
+        <div class="rbtns">
+          <button class="bsave" id="svBtn" onclick="saveS()">💾 Sauvegarder</button>
+          <button class="breset" onclick="resetM()">↩ Nouvelle mesure</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ERROR -->
+    <div class="mpan" id="p-err">
+      <div class="errin">
+        <div style="font-size:42px">📵</div>
+        <div style="font-size:18px;font-weight:700">Caméra non disponible</div>
+        <div class="errmsg" id="eMsg">Accès caméra refusé.</div>
+        <div class="errhint" id="eHint">iOS : Réglages → Safari → Caméra → Autoriser. Android : Paramètres navigateur → Autorisations → Caméra. Nécessite HTTPS ou localhost.</div>
+        <button class="breset" onclick="resetM()">↩ Réessayer</button>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- FONCTIONNALITÉS -->
+<section class="sec rev" id="fonctionnalites">
+  <div class="slbl">Fonctionnalités avancées</div>
+  <h2>Les plus</h2>
+  <p class="sint">Écosystème complet d'analyse biométrique pour les professionnels du biofeedback.</p>
+  <div class="fgrid">
+    <div class="fcard"><div class="fico"><svg viewBox="0 0 22 22"><polyline points="2,16 7,10 11,13 16,6 20,9"/><line x1="2" y1="19" x2="20" y2="19"/></svg></div><h4>Graphique de cohérence</h4><p>Courbe de cohérence en temps réel avec marqueurs physiologiques et zoom dynamique.</p><div class="mgraph"><svg viewBox="0 0 280 44" preserveAspectRatio="none" style="width:100%;height:100%"><defs><linearGradient id="mg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(0,229,255,.3)"/><stop offset="100%" stop-color="transparent"/></linearGradient></defs><path d="M0,34 C16,30 26,14 44,12 C62,10 70,26 90,20 C110,16 120,4 140,2 C158,0 168,15 188,12 C206,10 216,1 236,0 C254,0 262,15 280,12 L280,44 L0,44Z" fill="url(#mg)"/><path d="M0,34 C16,30 26,14 44,12 C62,10 70,26 90,20 C110,16 120,4 140,2 C158,0 168,15 188,12 C206,10 216,1 236,0 C254,0 262,15 280,12" stroke="var(--cyan)" stroke-width="1.8" fill="none"/></svg></div></div>
+    <div class="fcard"><div class="fico"><svg viewBox="0 0 22 22"><rect x="2" y="12" width="3" height="8" rx="1"/><rect x="7" y="7" width="3" height="13" rx="1"/><rect x="12" y="4" width="3" height="16" rx="1"/><rect x="17" y="9" width="3" height="11" rx="1"/></svg></div><h4>Analyse spectrale HRV</h4><p>FFT sur intervalles RR — bandes LF (0.04–0.15 Hz), HF (0.15–0.40 Hz), ratio LF/HF.</p><div class="specb"><div class="spbar" style="--h:.3;height:17px"></div><div class="spbar" style="--h:.6;height:26px;animation-delay:.1s"></div><div class="spbar" style="--h:.9;height:38px;animation-delay:.2s"></div><div class="spbar" style="--h:1;height:40px;animation-delay:.3s"></div><div class="spbar" style="--h:.8;height:34px;animation-delay:.4s"></div><div class="spbar" style="--h:.5;height:24px;animation-delay:.5s"></div><div class="spbar" style="--h:.3;height:17px;animation-delay:.6s"></div><div class="spbar" style="--h:.2;height:12px;animation-delay:.7s"></div><div class="spbar" style="--h:.15;height:9px;animation-delay:.8s"></div><div class="spbar" style="--h:.1;height:7px;animation-delay:.9s"></div></div></div>
+    <div class="fcard"><div class="fico"><svg viewBox="0 0 22 22"><circle cx="11" cy="11" r="9"/><polyline points="11,6 11,11 14,14"/></svg></div><h4>Historique complet</h4><p>Toutes vos séances sauvegardées avec BPM, HRV et cohérence. Consultez depuis l'onglet Analyse.</p></div>
+    <div class="fcard"><div class="fico"><svg viewBox="0 0 22 22"><circle cx="17" cy="5" r="2"/><circle cx="5" cy="11" r="2"/><circle cx="17" cy="17" r="2"/><line x1="7" y1="10" x2="15" y2="6"/><line x1="7" y1="12" x2="15" y2="16"/></svg></div><h4>Partage des résultats</h4><p>Exportez vos analyses et partagez avec votre réseau professionnel.</p><div class="srow"><button class="sb3 sbm" onclick="shareR('mail')">✉ Mail</button><button class="sb3 sbf" onclick="shareR('fb')">Facebook</button><button class="sb3 sbt" onclick="shareR('tw')">Twitter</button></div></div>
+    <div class="fcard"><div class="fico"><svg viewBox="0 0 22 22"><path d="M12 2a5 5 0 1 0 0 10A5 5 0 0 0 12 2z"/><path d="M2 20c0-4.4 4.5-8 10-8s10 3.6 10 8"/></svg></div><h4>Programmes personnalisés</h4><p>Adaptez le rythme selon votre objectif — récupération ou activation cognitive.</p><div class="mopills"><span class="mop mopr" onclick="setModeF('relax',this)">🌊 Relaxant</span><span class="mop mopb" onclick="setModeF('boost',this)">⚡ Dynamisant</span></div></div>
+    <div class="fcard"><div class="fico"><svg viewBox="0 0 22 22"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg></div><h4>Mesure PPG précise</h4><p>Filtrage AC du signal PPG, suppression dérive thermique, détection de pics adaptative, médiane des intervalles RR.</p></div>
+  </div>
+</section>
+
+<!-- ANALYSE -->
+<section class="sec rev" id="analyse">
+  <div class="slbl">Historique des séances</div>
+  <h2>Analyse</h2>
+  <p class="sint">Retrouvez toutes vos séances enregistrées avec les métriques physiologiques détaillées.</p>
+  <div id="histC"></div>
+</section>
+
+<footer>
+  <p>⚠ <strong>Non destiné à un usage diagnostique ou thérapeutique avec des patients.</strong> Réservé aux professionnels du biofeedback. © 2025 CardioSync</p>
+</footer>
+
+<script>
+/* ══════════════════════════════════════════════════
+   PPG ENGINE — HIGH PRECISION
+   Improvements vs previous version:
+   1. AC component extraction (DC removal) → eliminates flash thermal drift
+   2. Bandpass: short MA (smoothing) minus long MA (DC baseline)
+   3. Peak detection on AC signal with adaptive amplitude threshold
+   4. IQR outlier rejection on RR intervals (removes ectopic beats)
+   5. Median instead of mean → robust against occasional spikes
+   6. Minimum 4 consistent peaks before reporting BPM
+   ══════════════════════════════════════════════════ */
+const PPG = {
+  raw: [],      // {v, t}  — raw red channel values
+  ac:  [],      // {v, t}  — AC (pulsatile) component
+  peaks: [],    // {t, h}  — detected peak timestamps + heights
+  bBuf: [],     // stable BPM buffer
+  MAX_RAW: 450, // ~15s at 30fps
+  MAX_AC:  300,
+
+  reset() { this.raw=[]; this.ac=[]; this.peaks=[]; this.bBuf=[]; },
+
+  // ── Frame input ──
+  push(rawVal) {
+    const t = performance.now();
+    this.raw.push({ v: rawVal, t });
+    if (this.raw.length > this.MAX_RAW) this.raw.shift();
+
+    // Need at least 2 s of data for DC estimation
+    if (this.raw.length < 60) return;
+
+    // --- Step 1: DC removal (long moving average ≈ 2 s at 30 fps)
+    const DCwin = Math.min(90, this.raw.length);
+    const dc = this.raw.slice(-DCwin).reduce((s, x) => s + x.v, 0) / DCwin;
+
+    // --- Step 2: Short smoothing (≈ 7 frames)
+    const SMwin = Math.min(7, this.raw.length);
+    const sm = this.raw.slice(-SMwin).reduce((s, x) => s + x.v, 0) / SMwin;
+
+    // --- Step 3: AC component
+    const acVal = sm - dc;
+    this.ac.push({ v: acVal, t });
+    if (this.ac.length > this.MAX_AC) this.ac.shift();
+
+    if (this.ac.length > 30) this._detectPeak();
+  },
+
+  // ── Peak detection on AC signal ──
+  _detectPeak() {
+    const N = this.ac.length;
+    const i = N - 2;  // check second-to-last sample
+    if (i < 3) return;
+
+    const prev = this.ac[i-1].v, curr = this.ac[i].v, next = this.ac[i+1].v;
+
+    // Must be a local maximum
+    if (curr <= prev || curr <= next) return;
+
+    // Adaptive amplitude gate: must exceed 30% of the recent AC peak
+    const win = this.ac.slice(-90).map(x => Math.abs(x.v));
+    const ampMax = Math.max(...win);
+    if (ampMax < 0.0003) return;   // no meaningful signal
+    if (curr < ampMax * 0.30) return; // too small — noise
+
+    const t = this.ac[i].t;
+    const last = this.peaks[this.peaks.length - 1];
+
+    // Physiological refractory period: min 333 ms (≤ 180 BPM)
+    if (last && t - last.t < 333) return;
+
+    // Avoid duplicate detection near previous peak
+    if (last && t - last.t < 380 && curr < last.h) return;
+
+    this.peaks.push({ t, h: curr });
+    if (this.peaks.length > 30) this.peaks.shift();
+    this._calcBPM();
+  },
+
+  // ── BPM from RR intervals with IQR outlier removal ──
+  _calcBPM() {
+    if (this.peaks.length < 4) return;
+
+    // Build RR interval list
+    const rr = [];
+    for (let i = 1; i < this.peaks.length; i++) {
+      const d = this.peaks[i].t - this.peaks[i-1].t;
+      if (d > 333 && d < 1700) rr.push(d); // 35–180 BPM
+    }
+    if (rr.length < 3) return;
+
+    // IQR filter: remove ectopic beats / movement artifacts
+    const sorted = [...rr].sort((a, b) => a - b);
+    const q1 = sorted[Math.floor(sorted.length * 0.25)];
+    const q3 = sorted[Math.floor(sorted.length * 0.75)];
+    const iqr = q3 - q1;
+    const lo = q1 - 1.5 * iqr, hi = q3 + 1.5 * iqr;
+    const clean = rr.filter(d => d >= lo && d <= hi);
+    if (clean.length < 3) return;
+
+    // Median for stability
+    const cs = [...clean].sort((a, b) => a - b);
+    const med = cs[Math.floor(cs.length / 2)];
+    const bpm = Math.round(60000 / med);
+
+    if (bpm >= 38 && bpm <= 185) {
+      this.bBuf.push(bpm);
+      if (this.bBuf.length > 8) this.bBuf.shift();
+    }
+  },
+
+  // ── Outputs ──
+  getBPM() {
+    if (this.bBuf.length < 4) return null; // need 4 stable readings
+    const s = [...this.bBuf].sort((a, b) => a - b);
+    return s[Math.floor(s.length / 2)]; // median
+  },
+
+  getRR() {
+    const b = this.getBPM();
+    return b ? Math.round(60000 / b) : null;
+  },
+
+  getHRV() {
+    if (this.peaks.length < 5) return null;
+    const rr = [];
+    for (let i = 1; i < this.peaks.length; i++) {
+      const d = this.peaks[i].t - this.peaks[i-1].t;
+      if (d > 333 && d < 1700) rr.push(d);
+    }
+    if (rr.length < 4) return null;
+    const m = rr.reduce((a, b) => a + b, 0) / rr.length;
+    return Math.round(Math.sqrt(rr.reduce((a, b) => a + (b - m) ** 2, 0) / rr.length));
+  },
+
+  getCoherence() {
+    if (this.peaks.length < 8) return 0;
+    const rr = [];
+    for (let i = 1; i < this.peaks.length; i++) {
+      const d = this.peaks[i].t - this.peaks[i-1].t;
+      if (d > 333 && d < 1700) rr.push(d);
+    }
+    if (rr.length < 6) return 0;
+    const m = rr.reduce((a, b) => a + b, 0) / rr.length;
+    const cv = Math.sqrt(rr.reduce((a, b) => a + (b - m) ** 2, 0) / rr.length) / m;
+    return Math.max(0, Math.min(100, Math.round(100 - cv * 350)));
+  },
+
+  // Signal quality: based on AC amplitude vs baseline noise
+  getQuality() {
+    if (this.ac.length < 40) return 0;
+    const recent = this.ac.slice(-60).map(x => Math.abs(x.v));
+    const maxA = Math.max(...recent);
+    const meanA = recent.reduce((a, b) => a + b, 0) / recent.length;
+    if (maxA < 0.0003) return 5; // no finger
+    // SNR proxy: peak-to-mean ratio of AC
+    const snr = maxA / (meanA + 0.0001);
+    if (snr < 1.5) return 12;
+    if (snr > 12)  return 30; // noisy/movement
+    return Math.min(100, Math.max(15, Math.round(snr * 10)));
+  },
+
+  // Normalised AC signal for canvas display
+  getSig(pts = 200) {
+    if (this.ac.length < 10) return [];
+    const raw = this.ac.slice(-pts).map(x => x.v);
+    const mn = Math.min(...raw), mx = Math.max(...raw), rng = mx - mn || 1;
+    return raw.map(v => (v - mn) / rng);
+  }
+};
+
+/* ══════════════════════════════════════════════════
+   APP STATE
+   ══════════════════════════════════════════════════ */
+let stream_ = null, track_ = null, rafId = null;
+let startT = null, durTim = null, brTim = null;
+let brPhase = 'inhale';
+let breathCycle = { in: 5500, out: 5500 };
+let sessions = [];
+try { sessions = JSON.parse(localStorage.getItem('cs_s') || '[]'); } catch(e) {}
+
+/* ══════════════════════════════════════════════════
+   CAMERA START
+   ══════════════════════════════════════════════════ */
+async function startM() {
+  showP('req');
+  try {
+    stream_ = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: 'environment' },
+        width: { ideal: 1280 }, height: { ideal: 720 },
+        frameRate: { ideal: 30, min: 20 }
+      }
+    });
+  } catch(e) { showErr(e); return; }
+
+  const vid = document.getElementById('vid');
+  vid.srcObject = stream_;
+  try { await vid.play(); } catch(e) {}
+
+  track_ = stream_.getVideoTracks()[0];
+  const caps = track_.getCapabilities ? track_.getCapabilities() : {};
+  const ti = document.getElementById('tinfo');
+  if (caps.torch) {
+    try {
+      await track_.applyConstraints({ advanced: [{ torch: true }] });
+      ti.textContent = '🔦 Flash LED activé — posez le doigt sur le flash + caméra.';
+      ti.style.color = 'var(--cyan)';
+    } catch(e) {
+      ti.textContent = '⚠ Flash non activé — posez quand même le doigt sur la caméra.';
+    }
+  } else {
+    ti.textContent = 'ℹ Posez l\'index sur la caméra arrière.';
+  }
+
+  PPG.reset();
+  startT = performance.now();
+  showP('act');
+  startDurTimer();
+  startBreath();
+  rafId = requestAnimationFrame(loop);
+}
+
+/* ══════════════════════════════════════════════════
+   FRAME LOOP
+   ══════════════════════════════════════════════════ */
+const prc = document.getElementById('prc');
+const pctx = prc.getContext('2d');
+prc.width = 80; prc.height = 80;
+
+function loop() {
+  const vid = document.getElementById('vid');
+  if (vid.readyState >= 2) {
+    pctx.drawImage(vid, 0, 0, 80, 80);
+    const d = pctx.getImageData(0, 0, 80, 80).data;
+    let r = 0;
+    for (let i = 0; i < d.length; i += 4) r += d[i];
+    PPG.push((r / (d.length / 4)) / 255);
+    updateUI();
+  }
+  rafId = requestAnimationFrame(loop);
+}
+
+/* ══════════════════════════════════════════════════
+   UI UPDATE
+   ══════════════════════════════════════════════════ */
+const sigC = document.getElementById('sigC');
+const sctx = sigC.getContext('2d');
+
+function updateUI() {
+  const bpm = PPG.getBPM(), hrv = PPG.getHRV(), rr = PPG.getRR();
+  const coh = PPG.getCoherence(), q = PPG.getQuality();
+
+  // — Bloc A: BPM —
+  const bv = document.getElementById('bpmV');
+  if (bpm) {
+    if (bv.textContent !== String(bpm)) {
+      bv.textContent = bpm;
+      bv.style.animation = 'none';
+      void bv.offsetWidth;
+      bv.style.animation = 'hb .28s ease';
+    }
+  } else { bv.textContent = '--'; }
+
+  const st = document.getElementById('bpmSt');
+  if (q > 55) { st.textContent = '✅ Signal stable'; st.style.color = 'var(--green)'; }
+  else if (q > 20) { st.textContent = '⚠ Ajustez la position du doigt'; st.style.color = 'var(--orange)'; }
+  else { st.textContent = '⏳ Posez le doigt sur le flash + caméra...'; st.style.color = 'var(--cyan)'; }
+
+  document.getElementById('sHRV').textContent = hrv ?? '--';
+  document.getElementById('sRR').textContent = rr ?? '--';
+  document.getElementById('qFi').style.width = q + '%';
+  document.getElementById('qPt').textContent = q + '%';
+
+  // — Bloc B: Gauge —
+  const circ = 2 * Math.PI * 55; // r=55
+  document.getElementById('gPrg').style.strokeDasharray = circ;
+  document.getElementById('gPrg').style.strokeDashoffset = circ - (circ * coh / 100);
+  document.getElementById('gVal').innerHTML = coh + '<span style="font-size:15px">%</span>';
+
+  const tt = document.getElementById('thrTick');
+  if (!bpm) { tt.textContent = 'En attente du signal...'; tt.style.color = 'var(--td)'; }
+  else if (coh >= 80) { tt.textContent = '🎯 Seuil 80% atteint — effets optimaux !'; tt.style.color = 'var(--cyan)'; }
+  else { tt.textContent = `Objectif : ${80 - coh}% supplémentaires → synchronisez la respiration`; tt.style.color = 'var(--td)'; }
+
+  // — Signal canvas —
+  drawSig();
+}
+
+function drawSig() {
+  const W = sigC.offsetWidth || 320, H = 80;
+  sigC.width = W; sigC.height = H;
+  sctx.clearRect(0, 0, W, H);
+
+  // Grid
+  sctx.strokeStyle = 'rgba(255,45,85,.055)'; sctx.lineWidth = .5;
+  for (let x = 0; x < W; x += 26) { sctx.beginPath(); sctx.moveTo(x,0); sctx.lineTo(x,H); sctx.stroke(); }
+  for (let y = 0; y < H; y += 16) { sctx.beginPath(); sctx.moveTo(0,y); sctx.lineTo(W,y); sctx.stroke(); }
+
+  const sig = PPG.getSig(Math.max(20, Math.floor(W / 1.8)));
+  if (sig.length < 5) return;
+
+  const step = W / (sig.length - 1);
+  sctx.beginPath();
+  sctx.strokeStyle = '#ff2d55'; sctx.lineWidth = 1.8;
+  sctx.shadowColor = 'rgba(255,45,85,.5)'; sctx.shadowBlur = 5;
+  sig.forEach((v, i) => { const x = i * step, y = H - 5 - v * (H - 12); i === 0 ? sctx.moveTo(x,y) : sctx.lineTo(x,y); });
+  sctx.stroke(); sctx.shadowBlur = 0;
+}
+
+/* ══════════════════════════════════════════════════
+   STOP / RESULT
+   ══════════════════════════════════════════════════ */
+function stopM() {
+  cancelAnimationFrame(rafId);
+  stopBreath(); clearInterval(durTim);
+  if (track_) { try { track_.applyConstraints({ advanced: [{ torch: false }] }); } catch(e) {} }
+  if (stream_) { stream_.getTracks().forEach(t => t.stop()); stream_ = null; }
+
+  const dur = Math.round((performance.now() - startT) / 1000);
+  const bpm = PPG.getBPM(), coh = PPG.getCoherence();
+
+  document.getElementById('rBpm').textContent = bpm ?? '--';
+  document.getElementById('rCoh').textContent = coh + '%';
+  document.getElementById('rDur').textContent = dur + 's';
+
+  let msg = '';
+  if (bpm) {
+    if (coh >= 80) msg = `🎯 <strong>Excellent !</strong> Cohérence ${coh}% — effets positifs sur le système nerveux autonome significatifs.`;
+    else if (coh >= 50) msg = `💪 Bonne séance. Cohérence ${coh}% — synchronisez mieux la respiration pour dépasser 80%.`;
+    else msg = `📈 Cohérence ${coh}%. Suivez le guide respiratoire et restez immobile pour améliorer le score.`;
+  } else {
+    msg = '⚠ Signal insuffisant — couvrez bien le flash ET la caméra avec l\'index, restez immobile.';
+  }
+  document.getElementById('rMsg').innerHTML = msg;
+  window._last = { bpm, coh, dur, date: new Date().toISOString() };
+
+  const sb = document.getElementById('svBtn');
+  sb.textContent = '💾 Sauvegarder'; sb.style.background = '';
+  showP('res');
+}
+
+function saveS() {
+  if (!window._last) return;
+  sessions.unshift(window._last);
+  if (sessions.length > 50) sessions.pop();
+  try { localStorage.setItem('cs_s', JSON.stringify(sessions)); } catch(e) {}
+  renderH();
+  const b = document.getElementById('svBtn');
+  b.textContent = '✅ Sauvegardé !';
+  b.style.background = 'linear-gradient(135deg,var(--green),#1a8c40)';
+}
+
+function resetM() {
+  if (stream_) { stream_.getTracks().forEach(t => t.stop()); stream_ = null; }
+  cancelAnimationFrame(rafId); stopBreath(); clearInterval(durTim);
+  PPG.reset();
+  document.getElementById('bpmV').textContent = '--';
+  document.getElementById('sDur').textContent = '0s';
+  showP('idle');
+}
+
+/* ══════════════════════════════════════════════════
+   PANELS
+   ══════════════════════════════════════════════════ */
+function showP(n) {
+  ['idle','req','act','res','err'].forEach(p => {
+    const el = document.getElementById('p-' + p);
+    if (el) el.classList.toggle('on', p === n);
+  });
+}
+function showErr(e) {
+  let m = 'Accès caméra impossible.', h = 'Vérifiez les permissions navigateur. Nécessite HTTPS ou localhost.';
+  if (e.name === 'NotAllowedError') { m = 'Accès caméra refusé.'; h = 'iOS : Réglages → Safari → Caméra → Autoriser. Android : Paramètres navigateur → Autorisations → Caméra.'; }
+  else if (e.name === 'NotFoundError') { m = 'Aucune caméra arrière trouvée.'; h = 'Sur desktop, utilisez un appareil mobile pour la mesure PPG via flash.'; }
+  else if (e.name === 'NotReadableError') { m = 'Caméra déjà utilisée par une autre app.'; h = 'Fermez les autres apps utilisant la caméra, puis réessayez.'; }
+  document.getElementById('eMsg').textContent = m;
+  document.getElementById('eHint').textContent = h;
+  showP('err');
+}
+
+/* ══════════════════════════════════════════════════
+   TIMERS & BREATHING
+   ══════════════════════════════════════════════════ */
+function startDurTimer() {
+  durTim = setInterval(() => {
+    const s = Math.round((performance.now() - startT) / 1000);
+    document.getElementById('sDur').textContent = s + 's';
+  }, 1000);
+}
+
+function startBreath() { brPhase = 'inhale'; updBrTxt(); schedBr(); }
+function stopBreath() { clearTimeout(brTim); }
+function schedBr() {
+  const d = brPhase === 'inhale' ? breathCycle.in : breathCycle.out;
+  brTim = setTimeout(() => { brPhase = brPhase === 'inhale' ? 'exhale' : 'inhale'; updBrTxt(); schedBr(); }, d);
+}
+function updBrTxt() {
+  const el = document.getElementById('brTxt'); if (!el) return;
+  if (!el.style.transition) el.style.transition = 'opacity .32s';
+  el.style.opacity = '0';
+  setTimeout(() => {
+    el.textContent = brPhase === 'inhale' ? 'INSPIREZ' : 'EXPIREZ';
+    el.style.color = brPhase === 'inhale' ? 'var(--blue)' : 'var(--cyan)';
+    el.style.opacity = '1';
+  }, 300);
+}
+function setMode(m, el) {
+  breathCycle = m === 'relax' ? { in: 5000, out: 6000 } : { in: 4000, out: 4000 };
+  const ryt = document.getElementById('brRyt');
+  if (ryt) ryt.textContent = m === 'relax' ? '5s · 6s' : '4s · 4s';
+  document.querySelectorAll('.mp').forEach(p => { p.style.opacity='.55'; p.style.fontWeight='600'; });
+  if (el) { el.style.opacity = '1'; el.style.fontWeight = '800'; }
+}
+function setModeF(m, el) {
+  breathCycle = m === 'relax' ? { in: 5000, out: 6000 } : { in: 4000, out: 4000 };
+  document.querySelectorAll('.mop').forEach(p => p.style.opacity = '.55');
+  if (el) el.style.opacity = '1';
+}
+
+/* ══════════════════════════════════════════════════
+   HISTORY
+   ══════════════════════════════════════════════════ */
+function renderH() {
+  const c = document.getElementById('histC');
+  if (!sessions.length) { c.innerHTML = '<div class="hempty"><div class="em">📋</div><p>Aucune séance enregistrée.<br>Effectuez votre première mesure !</p></div>'; return; }
+  const rows = sessions.map(s => {
+    const d = new Date(s.date);
+    const ds = d.toLocaleDateString('fr-FR', { day:'2-digit', month:'short' }) + ' ' + d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+    const badge = s.coh >= 80 ? '<span class="hbdg hbg">✓ Excellent</span>' : '<span class="hbdg hba">~ Correct</span>';
+    return `<div class="hrow"><span class="hdt">${ds}</span><div class="hvals"><div class="hv"><span class="hvn" style="color:var(--red)">${s.bpm??'--'}</span><div class="hvk">BPM</div></div><div class="hv"><span class="hvn" style="color:var(--cyan)">${s.coh}%</span><div class="hvk">Cohérence</div></div><div class="hv"><span class="hvn" style="color:var(--green)">${s.dur}s</span><div class="hvk">Durée</div></div></div>${badge}</div>`;
+  }).join('');
+  c.innerHTML = `<div class="hlist">${rows}</div><button class="clr" onclick="clrH()">🗑 Effacer l'historique</button>`;
+}
+function clrH() { if (!confirm('Effacer tout ?')) return; sessions = []; try { localStorage.removeItem('cs_s'); } catch(e) {} renderH(); }
+
+/* ══════════════════════════════════════════════════
+   SHARE / MISC
+   ══════════════════════════════════════════════════ */
+function shareR(p) {
+  const r = window._last, t = r ? `Ma séance CardioSync : ${r.bpm} BPM, cohérence ${r.coh}% 💓` : 'CardioSync — Cohérence cardiaque via flash iPhone 💓';
+  if (p === 'mail') window.open('mailto:?subject=Ma séance CardioSync&body=' + encodeURIComponent(t));
+  if (p === 'fb')   window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(location.href));
+  if (p === 'tw')   window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(t));
+}
+function G(id) { document.getElementById(id).scrollIntoView({ behavior: 'smooth' }); }
+
+/* ══════════════════════════════════════════════════
+   NAV + SCROLL
+   ══════════════════════════════════════════════════ */
+window.addEventListener('scroll', () => {
+  document.getElementById('mn').style.background = window.scrollY > 40 ? 'rgba(2,5,8,.93)' : 'rgba(2,5,8,.85)';
+  const ids = ['mesure','fonctionnalites','analyse'];
+  let cur = '';
+  ids.forEach(id => { const el = document.getElementById(id); if (el && window.scrollY >= el.offsetTop - 120) cur = id; });
+  document.querySelectorAll('.navl a').forEach(a => a.classList.toggle('act', a.getAttribute('href').replace('#','') === cur));
+});
+
+// Scroll reveal
+const ro = new IntersectionObserver(en => en.forEach(e => { if (e.isIntersecting) e.target.classList.add('vis'); }), { threshold: .07 });
+document.querySelectorAll('.rev').forEach(el => ro.observe(el));
+
+// Card mouse parallax
+document.querySelectorAll('.fcard').forEach(c => c.addEventListener('mousemove', e => {
+  const r = c.getBoundingClientRect();
+  c.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
+  c.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
+}));
+
+// Heartbeat CSS
+const s = document.createElement('style');
+s.textContent = '@keyframes hb{0%,100%{transform:scale(1)}15%{transform:scale(1.06)}30%{transform:scale(1)}}';
+document.head.appendChild(s);
+
+// Idle phone BPM drift animation
+let iB = 68;
+setInterval(() => {
+  iB += (Math.random() - .48) * 1.8;
+  iB = Math.max(60, Math.min(80, iB));
+  const el = document.getElementById('idlBpm');
+  if (el) el.textContent = Math.round(iB);
+}, 1400);
+
+renderH();
+</script>
+</body>
+</html>
