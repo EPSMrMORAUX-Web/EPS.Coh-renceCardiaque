@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>CardioSync — Cohérence Cardiaque</title>
+<style>
+:root {
+  --cyan:#00e5ff; --cyan-d:rgba(0,229,255,.15); --cyan-g:rgba(0,229,255,.35);
+  --red:#ff2d55; --red-d:rgba(255,45,85,.18); --blue:#0a84ff;
+  --green:#30d158; --orange:#ff9f0a;
+  --bg:#020508; --bg2:#070f18;
+  --glass:rgba(255,255,255,.04); --gb:rgba(255,255,255,.08);
+  --t:rgba(232,244,248,1); --td:rgba(232,244,248,.5); --tm:rgba(232,244,248,.25);
+  --mono:'SF Mono','Fira Code',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--t);font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;overflow-x:hidden;line-height:1.6}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,229,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.025) 1px,transparent 1px);background-size:50px 50px;pointer-events:none;z-index:0}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:14px 32px;background:rgba(2,5,8,.82);backdrop-filter:blur(20px);border-bottom:1px solid var(--gb);transition:.3s}
+.logo{display:flex;align-items:center;gap:9px;font-size:17px;font-weight:800;letter-spacing:-.4px;text-decoration:none;color:var(--t)}
+.logo svg{width:30px;height:22px}
+.pulse-dot{width:7px;height:7px;border-radius:50%;background:var(--red);display:inline-block;margin-left:3px;animation:pdot 1.1s ease-in-out infinite}
+@keyframes pdot{0%,100%{box-shadow:0 0 0 0 rgba(255,45,85,.8)}50%{box-shadow:0 0 0 5px rgba(255,45,85,0)}}
+.nav-links{display:flex;gap:4px}
+.nav-links a{padding:7px 14px;border-radius:8px;color:var(--td);text-decoration:none;font-size:13px;font-weight:500;transition:.2s;white-space:nowrap}
+.nav-links a:hover,.nav-links a.active{color:var(--cyan);background:var(--cyan-d)}
+.nav-cta{padding:8px 20px;border-radius:20px;background:linear-gradient(135deg,var(--cyan),var(--blue));color:#000;font-weight:700;font-size:13px;border:none;cursor:pointer;transition:.2s;white-space:nowrap}
+.nav-cta:hover{opacity:.85;transform:scale(1.03)}
+@media(max-width:680px){.nav-links a{font-size:12px;padding:6px 10px}.logo svg{display:none}}
+@media(max-width:480px){.nav-links a:nth-child(3){display:none}}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:110px 24px 60px;position:relative;z-index:1}
+.hero-badge{display:inline-flex;align-items:center;gap:7px;padding:5px 14px;border-radius:20px;background:var(--cyan-d);border:1px solid rgba(0,229,255,.3);font-size:11px;font-family:var(--mono);color:var(--cyan);letter-spacing:1px;text-transform:uppercase;margin-bottom:28px}
+.bdot{width:5px;height:5px;border-radius:50%;background:var(--cyan);animation:pdot 1s infinite}
+h1{font-size:clamp(28px,5.5vw,60px);font-weight:800;letter-spacing:-1.5px;line-height:1.08;background:linear-gradient(145deg,#fff 40%,var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:20px}
+.hero-sub{font-size:clamp(14px,1.8vw,17px);color:var(--td);max-width:520px;margin-bottom:36px}
+.flash-box{padding:18px 24px;background:linear-gradient(135deg,rgba(255,45,85,.1),rgba(255,165,0,.06));border:1px solid rgba(255,45,85,.3);border-radius:14px;max-width:560px;margin-bottom:32px;font-size:15px;line-height:1.6;position:relative;overflow:hidden}
+.flash-box::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,200,0,.04),transparent);animation:shim 3s infinite}
+@keyframes shim{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.flash-box strong{color:#ffd60a}
+.hero-btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.btn-p{padding:14px 32px;border-radius:30px;background:linear-gradient(135deg,var(--cyan),var(--blue));color:#000;font-weight:800;font-size:15px;border:none;cursor:pointer;transition:.25s;box-shadow:0 0 40px rgba(0,229,255,.3)}
+.btn-p:hover{transform:translateY(-2px);box-shadow:0 8px 50px rgba(0,229,255,.45)}
+.btn-o{padding:14px 24px;border-radius:30px;background:transparent;color:var(--td);font-weight:600;font-size:15px;border:1px solid var(--gb);cursor:pointer;transition:.25s}
+.btn-o:hover{border-color:var(--cyan-g);color:var(--cyan)}
+.disclaimer{margin-top:24px;font-size:11px;color:var(--tm);font-style:italic}
+
+/* SECTION */
+section.s{position:relative;z-index:1;padding:80px 24px;max-width:1080px;margin:0 auto}
+.slabel{font-size:10px;font-family:var(--mono);color:var(--cyan);letter-spacing:3px;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.slabel::before{content:'';width:30px;height:1px;background:var(--cyan)}
+h2{font-size:clamp(22px,3vw,36px);font-weight:800;letter-spacing:-.8px;margin-bottom:10px}
+.sint{font-size:15px;color:var(--td);max-width:560px;margin-bottom:48px}
+
+/* MEASURE CARD */
+.mcard{background:var(--bg2);border:1px solid var(--gb);border-radius:24px;overflow:hidden}
+.mpanel{display:none;padding:36px 28px}
+.mpanel.on{display:block}
+
+/* IDLE */
+.idlegrid{display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:center}
+@media(max-width:680px){.idlegrid{grid-template-columns:1fr}}
+.idle-h{font-size:22px;font-weight:800;letter-spacing:-.3px;margin-bottom:12px}
+.idle-d{font-size:14px;color:var(--td);line-height:1.7;margin-bottom:18px}
+.steps{display:flex;flex-direction:column;gap:10px}
+.step{display:flex;align-items:flex-start;gap:11px;padding:11px 14px;background:var(--glass);border:1px solid var(--gb);border-radius:11px}
+.snum{width:24px;height:24px;border-radius:7px;background:var(--cyan-d);border:1px solid rgba(0,229,255,.3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--cyan);flex-shrink:0;font-family:var(--mono)}
+.step p{font-size:13px;color:var(--td);line-height:1.5}
+.step p strong{color:var(--t)}
+.btn-start{margin-top:20px;width:100%;padding:15px;border-radius:13px;background:linear-gradient(135deg,var(--red),rgba(255,80,0,.9));color:#fff;font-weight:800;font-size:15px;border:none;cursor:pointer;transition:.25s;box-shadow:0 0 35px rgba(255,45,85,.3);display:flex;align-items:center;justify-content:center;gap:9px}
+.btn-start:hover{transform:translateY(-2px);box-shadow:0 8px 45px rgba(255,45,85,.45)}
+.phone-vis{display:flex;align-items:center;justify-content:center}
+.pframe{width:158px;height:296px;background:linear-gradient(160deg,#1a1a2e,#0a0a18);border-radius:34px;border:2px solid rgba(255,255,255,.1);position:relative;box-shadow:0 30px 70px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06);overflow:hidden;display:flex;align-items:center;justify-content:center}
+.pscreen{position:absolute;inset:12px;border-radius:23px;background:#000;overflow:hidden;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px}
+.p-bpm{font-family:var(--mono);font-size:34px;font-weight:700;color:var(--red);text-shadow:0 0 18px rgba(255,45,85,.7)}
+.p-lbl{font-size:9px;color:rgba(255,255,255,.35);letter-spacing:3px;text-transform:uppercase;font-family:var(--mono)}
+.cammod{position:absolute;top:13px;right:13px;width:42px;height:66px;background:#111;border-radius:11px;border:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}
+.clens{width:19px;height:19px;border-radius:50%;background:radial-gradient(circle,#1a1a2a,#222);border:2px solid rgba(255,255,255,.12)}
+.cflash{width:9px;height:9px;border-radius:3px;animation:cf 1.5s ease-in-out infinite}
+@keyframes cf{0%,100%{background:#1a1a10;box-shadow:none}50%{background:#ffd60a;box-shadow:0 0 10px rgba(255,214,10,.8)}}
+.srings{position:absolute;top:11px;right:11px;pointer-events:none}
+.sr{position:absolute;border-radius:50%;border:1px solid var(--red);animation:srx 2.5s ease-out infinite}
+.sr:nth-child(1){width:56px;height:56px;top:2px;right:0;animation-delay:0s}
+.sr:nth-child(2){width:78px;height:78px;top:-11px;right:-11px;animation-delay:.8s}
+.sr:nth-child(3){width:104px;height:104px;top:-24px;right:-24px;animation-delay:1.6s}
+@keyframes srx{0%{opacity:.8;transform:scale(.8)}100%{opacity:0;transform:scale(1)}}
+
+/* REQUESTING */
+.reqin{text-align:center;padding:40px 20px;display:flex;flex-direction:column;align-items:center;gap:18px}
+.spinner{width:56px;height:56px;border-radius:50%;border:3px solid rgba(0,229,255,.15);border-top-color:var(--cyan);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ACTIVE */
+.actlayout{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start}
+@media(max-width:720px){.actlayout{grid-template-columns:1fr}}
+.actleft,.actright{display:flex;flex-direction:column;gap:18px}
+
+/* BPM display */
+.bpmdsp{text-align:center;padding:26px 16px;background:var(--glass);border:1px solid var(--gb);border-radius:17px;position:relative;overflow:hidden}
+.bpmdsp::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50%,rgba(255,45,85,.07),transparent 70%);pointer-events:none}
+.bpmv{font-family:var(--mono);font-size:76px;font-weight:800;color:var(--red);line-height:1;text-shadow:0 0 35px rgba(255,45,85,.55);display:block;letter-spacing:-2px}
+.bpmlbl{font-size:11px;color:var(--td);letter-spacing:4px;text-transform:uppercase;font-family:var(--mono);margin-top:4px}
+.bpmst{margin-top:8px;font-size:12px;color:var(--cyan);font-family:var(--mono);min-height:18px}
+
+/* Signal */
+.sigwrap{background:rgba(0,0,0,.5);border:1px solid rgba(255,45,85,.2);border-radius:13px;overflow:hidden;position:relative}
+.siglbl{position:absolute;top:7px;left:11px;font-size:9px;font-family:var(--mono);color:rgba(255,45,85,.55);letter-spacing:2px;text-transform:uppercase;z-index:2}
+#signalCanvas{display:block;width:100%;height:86px}
+
+/* Quality */
+.qwrap{padding:11px 15px;background:var(--glass);border:1px solid var(--gb);border-radius:11px;display:flex;align-items:center;gap:11px}
+.qlbl{font-size:10px;font-family:var(--mono);color:var(--td);text-transform:uppercase;letter-spacing:1px;white-space:nowrap}
+.qtrack{flex:1;height:5px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden}
+.qfill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--orange),var(--green));transition:width .5s;width:0%}
+.qpct{font-size:11px;font-family:var(--mono);color:var(--td);width:30px;text-align:right}
+
+/* Stats row */
+.statrow{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.statb{padding:11px 8px;background:var(--glass);border:1px solid var(--gb);border-radius:11px;text-align:center}
+.statv{font-family:var(--mono);font-size:19px;font-weight:700;color:var(--cyan);display:block;text-shadow:0 0 8px rgba(0,229,255,.45)}
+.statk{font-size:9px;color:var(--td);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px}
+
+/* Gauge */
+.gwrap{text-align:center;padding:22px 14px;background:var(--glass);border:1px solid var(--gb);border-radius:17px}
+.gtitle{font-size:10px;font-family:var(--mono);color:var(--td);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px}
+.gsvgwrap{width:140px;height:140px;position:relative;margin:0 auto}
+.gsvgwrap svg{width:100%;height:100%;transform:rotate(-90deg)}
+.gbg{fill:none;stroke:rgba(255,255,255,.06);stroke-width:10}
+.gprog{fill:none;stroke-width:10;stroke-linecap:round;stroke:url(#gg2);stroke-dasharray:345;stroke-dashoffset:345;transition:stroke-dashoffset .9s ease}
+.gabs{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.gval{font-family:var(--mono);font-size:32px;font-weight:800;color:var(--cyan);line-height:1;text-shadow:0 0 18px rgba(0,229,255,.6)}
+.gsub{font-size:9px;color:var(--td);letter-spacing:2px;text-transform:uppercase;margin-top:2px}
+.gthr{margin-top:10px;font-size:12px;color:var(--td)}
+.gthr span{color:var(--cyan);font-weight:600}
+
+/* Breath */
+.brwrap{padding:18px 14px;background:var(--glass);border:1px solid var(--gb);border-radius:17px;text-align:center}
+.brtitle{font-size:10px;font-family:var(--mono);color:var(--td);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px}
+.brvis{position:relative;width:100px;height:100px;margin:0 auto 10px}
+.brr{position:absolute;border-radius:50%;border:1.5px solid rgba(10,132,255,.3)}
+.brr1{inset:0;animation:brs 5.5s ease-in-out infinite}
+.brr2{inset:11px;animation:brs 5.5s ease-in-out infinite .3s}
+.brcore{position:absolute;inset:22px;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(10,132,255,.7),rgba(0,40,120,.5));border:1px solid rgba(10,132,255,.5);animation:brs 5.5s ease-in-out infinite;box-shadow:0 0 18px rgba(10,132,255,.35)}
+@keyframes brs{0%,100%{transform:scale(.82);opacity:.6}45%{transform:scale(1.18);opacity:1}}
+.brtxt{font-size:13px;font-weight:600;color:var(--blue);font-family:var(--mono);letter-spacing:2px;text-transform:uppercase;transition:opacity .35s}
+.brpace{display:flex;gap:7px;justify-content:center;margin-top:9px}
+.bp{width:5px;height:5px;border-radius:50%;background:var(--blue);opacity:.25;animation:bpa 5.5s ease-in-out infinite}
+.bp:nth-child(1){animation-delay:0s}.bp:nth-child(2){animation-delay:.5s}.bp:nth-child(3){animation-delay:1s}.bp:nth-child(4){animation-delay:1.5s}.bp:nth-child(5){animation-delay:2s}
+@keyframes bpa{0%,100%{opacity:.2;transform:scale(1)}50%{opacity:1;transform:scale(1.5)}}
+
+/* Torch info */
+#torchInfo{padding:9px 13px;border-radius:9px;font-size:11px;color:var(--td);background:var(--glass);border:1px solid var(--gb);text-align:center;font-family:var(--mono)}
+
+/* Stop */
+.btn-stop{width:100%;padding:13px;border-radius:11px;background:rgba(255,45,85,.1);border:1px solid rgba(255,45,85,.25);color:var(--red);font-weight:700;font-size:14px;cursor:pointer;transition:.2s}
+.btn-stop:hover{background:rgba(255,45,85,.18)}
+
+/* RESULT */
+.resin{display:flex;flex-direction:column;align-items:center;gap:24px;padding:8px 0;text-align:center}
+.rest{font-size:20px;font-weight:800;letter-spacing:-.3px}
+.resgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;width:100%;max-width:480px}
+.resb{padding:18px 10px;background:var(--glass);border:1px solid var(--gb);border-radius:14px}
+.resv{font-family:var(--mono);font-size:34px;font-weight:800;display:block;line-height:1}
+.resk{font-size:9px;color:var(--td);letter-spacing:2px;text-transform:uppercase;margin-top:5px}
+.r-red{color:var(--red);text-shadow:0 0 12px rgba(255,45,85,.5)}
+.r-cyan{color:var(--cyan);text-shadow:0 0 12px rgba(0,229,255,.5)}
+.r-green{color:var(--green);text-shadow:0 0 12px rgba(48,209,88,.5)}
+.resbtns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.btn-save{padding:12px 26px;border-radius:28px;background:linear-gradient(135deg,var(--cyan),var(--blue));color:#000;font-weight:700;font-size:14px;border:none;cursor:pointer;transition:.2s}
+.btn-save:hover{opacity:.85;transform:scale(1.03)}
+.btn-reset{padding:12px 22px;border-radius:28px;background:transparent;border:1px solid var(--gb);color:var(--td);font-weight:600;font-size:14px;cursor:pointer;transition:.2s}
+.btn-reset:hover{border-color:var(--cyan-g);color:var(--cyan)}
+.resmsg{font-size:14px;color:var(--td);max-width:400px;line-height:1.7;padding:14px 18px;background:var(--glass);border:1px solid var(--gb);border-radius:11px;text-align:center}
+
+/* ERROR */
+.errin{text-align:center;padding:40px 20px;display:flex;flex-direction:column;align-items:center;gap:14px}
+.erricon{font-size:44px}
+.errmsg{font-size:14px;color:var(--td);max-width:400px;line-height:1.7}
+.errhint{font-size:12px;color:var(--tm);background:rgba(255,45,85,.07);border:1px solid rgba(255,45,85,.18);border-radius:9px;padding:11px 15px;max-width:420px}
+
+/* FEATURES */
+#fonctionnalites{padding-top:30px}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:18px}
+.fcard{background:var(--bg2);border:1px solid var(--gb);border-radius:19px;padding:26px;transition:.3s;cursor:default;position:relative;overflow:hidden}
+.fcard::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at var(--mx,50%) var(--my,50%),rgba(0,229,255,.07),transparent 60%);opacity:0;transition:opacity .3s;pointer-events:none}
+.fcard:hover{transform:translateY(-4px);border-color:rgba(0,229,255,.2);box-shadow:0 14px 45px rgba(0,0,0,.4)}
+.fcard:hover::after{opacity:1}
+.ficon{width:42px;height:42px;border-radius:11px;background:var(--cyan-d);border:1px solid rgba(0,229,255,.2);display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+.ficon svg{width:19px;height:19px;stroke:var(--cyan);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.fcard h4{font-size:15px;font-weight:700;margin-bottom:7px;letter-spacing:-.2px}
+.fcard p{font-size:13px;color:var(--td);line-height:1.6}
+.srow{display:flex;gap:7px;margin-top:11px}
+.sbs{padding:5px 11px;border-radius:7px;font-size:11px;font-weight:600;border:1px solid;cursor:pointer;background:transparent;transition:.2s}
+.sbs:hover{opacity:.7}
+.sbs-m{color:var(--cyan);border-color:rgba(0,229,255,.3)}
+.sbs-f{color:#1877f2;border-color:rgba(24,119,242,.3)}
+.sbs-t{color:#1da1f2;border-color:rgba(29,161,242,.3)}
+.mpills{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap}
+.mpl{padding:5px 13px;border-radius:18px;font-size:11px;font-weight:600;cursor:pointer;transition:.2s}
+.mpl:hover{opacity:.8;transform:scale(1.04)}
+.mpl-r{background:rgba(0,229,255,.1);color:var(--cyan);border:1px solid rgba(0,229,255,.22)}
+.mpl-b{background:var(--red-d);color:var(--red);border:1px solid rgba(255,45,85,.22)}
+.specbars{display:flex;gap:3px;align-items:flex-end;height:42px;margin-top:12px}
+.spb{flex:1;border-radius:2px 2px 0 0;background:linear-gradient(180deg,var(--cyan),rgba(0,229,255,.2));animation:spa 1.8s ease-in-out infinite;transform-origin:bottom}
+@keyframes spa{0%,100%{transform:scaleY(1)}50%{transform:scaleY(var(--h,.5))}}
+.mgraph{width:100%;height:48px;margin-top:11px;background:rgba(0,0,0,.3);border-radius:8px;overflow:hidden}
+
+/* ANALYSE */
+#analyse{padding-top:30px}
+.hempty{text-align:center;padding:50px 20px;color:var(--tm);font-size:14px}
+.hempty .em{font-size:36px;margin-bottom:10px}
+.hlist{display:flex;flex-direction:column;gap:12px}
+.hrow{background:var(--bg2);border:1px solid var(--gb);border-radius:14px;padding:16px 20px;display:flex;align-items:center;gap:18px;transition:.2s;flex-wrap:wrap}
+.hrow:hover{border-color:rgba(0,229,255,.18);transform:translateX(2px)}
+.hdate{font-size:11px;color:var(--tm);font-family:var(--mono);white-space:nowrap;min-width:85px}
+.hvals{display:flex;gap:20px;flex:1;flex-wrap:wrap}
+.hv{text-align:center}
+.hvn{font-family:var(--mono);font-size:20px;font-weight:700;display:block}
+.hvk{font-size:9px;color:var(--td);letter-spacing:1.5px;text-transform:uppercase}
+.hbadge{padding:4px 11px;border-radius:18px;font-size:10px;font-weight:600}
+.hb-g{background:rgba(48,209,88,.1);color:var(--green);border:1px solid rgba(48,209,88,.22)}
+.hb-a{background:rgba(255,159,10,.1);color:var(--orange);border:1px solid rgba(255,159,10,.22)}
+.clearbtn{padding:8px 16px;border-radius:8px;background:transparent;border:1px solid rgba(255,45,85,.22);color:rgba(255,45,85,.55);font-size:11px;cursor:pointer;transition:.2s;margin-top:18px}
+.clearbtn:hover{background:var(--red-d);color:var(--red)}
+
+/* FOOTER */
+footer{position:relative;z-index:1;padding:28px;border-top:1px solid var(--gb);text-align:center}
+footer p{font-size:11px;color:var(--tm)}
+footer strong{color:rgba(232,244,248,.35)}
+
+/* REVEAL */
+.reveal{opacity:0;transform:translateY(22px);transition:.6s ease}
+.reveal.vis{opacity:1;transform:none}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="mn">
+  <a href="#" class="logo">
+    <svg viewBox="0 0 30 22" fill="none"><path d="M1 11 L6 11 L8 4 L10.5 18 L13 5 L15.5 14 L18 11 L29 11" stroke="#00e5ff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    CardioSync<span class="pulse-dot"></span>
+  </a>
+  <div class="nav-links">
+    <a href="#mesure">Fonctionnement</a>
+    <a href="#fonctionnalites">Fonctionnalités</a>
+    <a href="#analyse">Analyse</a>
+  </div>
+  <button class="nav-cta" onclick="scrollToMeasure()">Mesurer</button>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge"><span class="bdot"></span> Biofeedback PPG temps réel</div>
+  <h1>Analyse avancée de la<br>cohérence cardiaque</h1>
+  <p class="hero-sub">Approche technique destinée aux utilisateurs professionnels en biofeedback physiologique.</p>
+  <div class="flash-box">
+    <strong>⚡ Le flash de l'iPhone est utilisé comme capteur biométrique</strong> afin de détecter la fréquence cardiaque avec précision en temps réel. Placez votre doigt sur le flash et la caméra arrière.
+  </div>
+  <div class="hero-btns">
+    <button class="btn-p" onclick="scrollToMeasure()">❤️ Commencer la mesure</button>
+    <button class="btn-o" onclick="goto('fonctionnalites')">Voir les fonctionnalités</button>
+  </div>
+  <p class="disclaimer">⚠ Cette application n'est pas destinée à un usage avec des patients.</p>
+</div>
+
+<!-- MESURE -->
+<section class="s" id="mesure">
+  <div class="slabel">Module principal</div>
+  <h2>Mesure par flash iPhone</h2>
+  <p class="sint">Posez votre doigt sur le flash et la caméra arrière. L'application analyse les micro-variations lumineuses pour mesurer votre fréquence cardiaque en temps réel.</p>
+
+  <!-- Hidden processing elements -->
+  <video id="ppgVid" playsinline muted autoplay style="display:none;position:absolute;width:1px;height:1px;opacity:0"></video>
+  <canvas id="prc" style="display:none;position:absolute;width:1px;height:1px"></canvas>
+
+  <div class="mcard">
+
+    <!-- IDLE -->
+    <div class="mpanel on" id="p-idle">
+      <div class="idlegrid">
+        <div>
+          <div class="idle-h">Prêt à mesurer votre cœur ?</div>
+          <p class="idle-d">Le flash LED et la caméra arrière de votre téléphone fonctionnent comme capteur PPG (photopléthysmographie) pour analyser votre fréquence cardiaque en temps réel.</p>
+          <div class="steps">
+            <div class="step"><div class="snum">1</div><p>Tenez votre téléphone normalement, caméra arrière accessible.</p></div>
+            <div class="step"><div class="snum">2</div><p><strong>Posez le bout de l'index</strong> doucement sur le flash et la caméra.</p></div>
+            <div class="step"><div class="snum">3</div><p><strong>Restez immobile</strong> et respirez calmement. Comptez 30 à 60 secondes.</p></div>
+            <div class="step"><div class="snum">4</div><p><strong>Autorisez l'accès caméra</strong> dans la fenêtre de permission.</p></div>
+          </div>
+          <button class="btn-start" onclick="startMeasure()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            Démarrer la mesure
+          </button>
+        </div>
+        <div class="phone-vis">
+          <div style="position:relative">
+            <div class="pframe">
+              <div class="pscreen">
+                <span class="p-bpm" id="idleBpm">--</span>
+                <span class="p-lbl">BPM</span>
+              </div>
+              <div class="cammod"><div class="clens"></div><div class="cflash"></div></div>
+            </div>
+            <div class="srings"><div class="sr"></div><div class="sr"></div><div class="sr"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REQUESTING -->
+    <div class="mpanel" id="p-req">
+      <div class="reqin">
+        <div class="spinner"></div>
+        <div style="font-size:18px;font-weight:700">Activation de la caméra...</div>
+        <p style="color:var(--td);font-size:14px;max-width:340px;text-align:center">Autorisez l'accès à la caméra dans la fenêtre qui apparaît.<br>Le flash s'active automatiquement si disponible.</p>
+      </div>
+    </div>
+
+    <!-- ACTIVE -->
+    <div class="mpanel" id="p-act">
+      <div class="actlayout">
+        <div class="actleft">
+          <div class="bpmdsp">
+            <span class="bpmv" id="bpmV">--</span>
+            <div class="bpmlbl">Fréquence Cardiaque (BPM)</div>
+            <div class="bpmst" id="bpmSt">⏳ Analyse en cours...</div>
+          </div>
+          <div class="sigwrap">
+            <div class="siglbl">Signal PPG en direct</div>
+            <canvas id="signalCanvas" height="86"></canvas>
+          </div>
+          <div class="qwrap">
+            <span class="qlbl">Qualité signal</span>
+            <div class="qtrack"><div class="qfill" id="qFill"></div></div>
+            <span class="qpct" id="qPct">0%</span>
+          </div>
+          <div class="statrow">
+            <div class="statb"><span class="statv" id="sHRV">--</span><div class="statk">HRV ms</div></div>
+            <div class="statb"><span class="statv" id="sRR">--</span><div class="statk">RR ms</div></div>
+            <div class="statb"><span class="statv" id="sDur">0s</span><div class="statk">Durée</div></div>
+          </div>
+          <button class="btn-stop" onclick="stopMeasure()">⏹ Arrêter la mesure</button>
+        </div>
+        <div class="actright">
+          <div class="gwrap">
+            <div class="gtitle">Score de Cohérence</div>
+            <div class="gsvgwrap">
+              <svg viewBox="0 0 120 120">
+                <defs>
+                  <linearGradient id="gg2" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#0a84ff"/><stop offset="100%" stop-color="#00e5ff"/>
+                  </linearGradient>
+                </defs>
+                <circle class="gbg" cx="60" cy="60" r="50"/>
+                <circle class="gprog" cx="60" cy="60" r="50" id="gProg"/>
+              </svg>
+              <div class="gabs">
+                <span class="gval" id="gVal">0<span style="font-size:16px">%</span></span>
+                <span class="gsub">Cohérence</span>
+              </div>
+            </div>
+            <div class="gthr">Seuil optimal : <span>80%</span></div>
+          </div>
+          <div class="brwrap">
+            <div class="brtitle">Guide Respiratoire</div>
+            <div class="brvis">
+              <div class="brr brr1"></div>
+              <div class="brr brr2"></div>
+              <div class="brcore"></div>
+            </div>
+            <div class="brtxt" id="brTxt">INSPIREZ</div>
+            <div class="brpace"><div class="bp"></div><div class="bp"></div><div class="bp"></div><div class="bp"></div><div class="bp"></div></div>
+          </div>
+          <div id="torchInfo">🔦 Attente activation flash...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULT -->
+    <div class="mpanel" id="p-res">
+      <div class="resin">
+        <div style="font-size:42px">🎯</div>
+        <div class="rest">Séance terminée</div>
+        <div class="resgrid">
+          <div class="resb"><span class="resv r-red" id="rBpm">--</span><div class="resk">BPM moyen</div></div>
+          <div class="resb"><span class="resv r-cyan" id="rCoh">--%</span><div class="resk">Cohérence</div></div>
+          <div class="resb"><span class="resv r-green" id="rDur">--s</span><div class="resk">Durée</div></div>
+        </div>
+        <div class="resmsg" id="rMsg"></div>
+        <div class="resbtns">
+          <button class="btn-save" id="saveBtn" onclick="saveSession()">💾 Sauvegarder</button>
+          <button class="btn-reset" onclick="resetMeasure()">↩ Nouvelle mesure</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ERROR -->
+    <div class="mpanel" id="p-err">
+      <div class="errin">
+        <div class="erricon">📵</div>
+        <div style="font-size:19px;font-weight:700">Caméra non disponible</div>
+        <div class="errmsg" id="eMsg">L'accès à la caméra a été refusé.</div>
+        <div class="errhint" id="eHint">Sur iOS : Réglages → Safari → Caméra → Autoriser. Sur Android : Paramètres du navigateur → Autorisations → Caméra. L'application nécessite HTTPS ou localhost.</div>
+        <button class="btn-reset" onclick="resetMeasure()">↩ Réessayer</button>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- FONCTIONNALITÉS -->
+<section class="s reveal" id="fonctionnalites">
+  <div class="slabel">Fonctionnalités avancées</div>
+  <h2>Les plus</h2>
+  <p class="sint">Écosystème complet d'analyse biométrique pour professionnels du biofeedback.</p>
+  <div class="fgrid">
+
+    <div class="fcard">
+      <div class="ficon"><svg viewBox="0 0 22 22"><polyline points="2,16 7,10 11,13 16,6 20,9"/><line x1="2" y1="19" x2="20" y2="19"/></svg></div>
+      <h4>Graphique de cohérence</h4>
+      <p>Courbe de cohérence cardiaque en temps réel avec marqueurs d'événements physiologiques et zoom dynamique.</p>
+      <div class="mgraph">
+        <svg viewBox="0 0 280 48" preserveAspectRatio="none" style="width:100%;height:100%">
+          <defs><linearGradient id="mg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(0,229,255,.32)"/><stop offset="100%" stop-color="transparent"/></linearGradient></defs>
+          <path d="M0,36 C18,32 28,16 46,14 C64,12 74,28 94,22 C114,18 124,6 144,4 C162,2 172,17 192,14 C210,12 220,2 238,1 C256,0 264,17 280,14 L280,48 L0,48Z" fill="url(#mg2)"/>
+          <path d="M0,36 C18,32 28,16 46,14 C64,12 74,28 94,22 C114,18 124,6 144,4 C162,2 172,17 192,14 C210,12 220,2 238,1 C256,0 264,17 280,14" stroke="var(--cyan)" stroke-width="2" fill="none"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="fcard">
+      <div class="ficon"><svg viewBox="0 0 22 22"><rect x="2" y="12" width="3" height="8" rx="1"/><rect x="7" y="7" width="3" height="13" rx="1"/><rect x="12" y="4" width="3" height="16" rx="1"/><rect x="17" y="9" width="3" height="11" rx="1"/></svg></div>
+      <h4>Analyse spectrale HRV</h4>
+      <p>FFT sur intervalles RR. Visualisation bandes LF (0.04–0.15 Hz), HF (0.15–0.40 Hz) et ratio LF/HF.</p>
+      <div class="specbars">
+        <div class="spb" style="--h:.3;height:18px"></div><div class="spb" style="--h:.6;height:28px;animation-delay:.1s"></div>
+        <div class="spb" style="--h:.9;height:40px;animation-delay:.2s"></div><div class="spb" style="--h:1;height:42px;animation-delay:.3s"></div>
+        <div class="spb" style="--h:.8;height:36px;animation-delay:.4s"></div><div class="spb" style="--h:.5;height:26px;animation-delay:.5s"></div>
+        <div class="spb" style="--h:.3;height:18px;animation-delay:.6s"></div><div class="spb" style="--h:.2;height:13px;animation-delay:.7s"></div>
+        <div class="spb" style="--h:.15;height:9px;animation-delay:.8s"></div><div class="spb" style="--h:.1;height:7px;animation-delay:.9s"></div>
+      </div>
+    </div>
+
+    <div class="fcard">
+      <div class="ficon"><svg viewBox="0 0 22 22"><circle cx="11" cy="11" r="9"/><polyline points="11,6 11,11 14,14"/></svg></div>
+      <h4>Historique complet</h4>
+      <p>Toutes vos séances sauvegardées avec BPM, HRV et cohérence. Consultez depuis l'onglet Analyse ci-dessous.</p>
+    </div>
+
+    <div class="fcard">
+      <div class="ficon"><svg viewBox="0 0 22 22"><circle cx="17" cy="5" r="2"/><circle cx="5" cy="11" r="2"/><circle cx="17" cy="17" r="2"/><line x1="7" y1="10" x2="15" y2="6"/><line x1="7" y1="12" x2="15" y2="16"/></svg></div>
+      <h4>Partage des résultats</h4>
+      <p>Exportez vos analyses et partagez avec votre réseau professionnel ou sur les réseaux sociaux.</p>
+      <div class="srow">
+        <button class="sbs sbs-m" onclick="shareResult('mail')">✉ Mail</button>
+        <button class="sbs sbs-f" onclick="shareResult('fb')">Facebook</button>
+        <button class="sbs sbs-t" onclick="shareResult('tw')">Twitter</button>
+      </div>
+    </div>
+
+    <div class="fcard">
+      <div class="ficon"><svg viewBox="0 0 22 22"><path d="M12 2a5 5 0 1 0 0 10A5 5 0 0 0 12 2z"/><path d="M2 20c0-4.4 4.5-8 10-8s10 3.6 10 8"/></svg></div>
+      <h4>Programmes personnalisés</h4>
+      <p>Adaptez le rythme des séances selon votre objectif — récupération parasympathique ou activation cognitive.</p>
+      <div class="mpills">
+        <span class="mpl mpl-r" onclick="setMode('relax',this)">🌊 Relaxant</span>
+        <span class="mpl mpl-b" onclick="setMode('boost',this)">⚡ Dynamisant</span>
+      </div>
+    </div>
+
+    <div class="fcard">
+      <div class="ficon"><svg viewBox="0 0 22 22"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg></div>
+      <h4>Mesure PPG en direct</h4>
+      <p>Photopléthysmographie via flash LED + capteur CMOS. BPM, intervalles RR et cohérence mis à jour en continu.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ANALYSE -->
+<section class="s reveal" id="analyse">
+  <div class="slabel">Historique des séances</div>
+  <h2>Analyse</h2>
+  <p class="sint">Retrouvez toutes vos séances enregistrées avec les métriques physiologiques détaillées.</p>
+  <div id="histCont"></div>
+</section>
+
+<footer>
+  <p>⚠ <strong>Non destiné à un usage diagnostique ou thérapeutique avec des patients.</strong><br>Réservé aux professionnels du biofeedback physiologique. © 2025 CardioSync</p>
+</footer>
+
+<script>
+// ══════════════════════════════════════
+// PPG ENGINE
+// ══════════════════════════════════════
+const PPG = {
+  s: [], pk: [], bBuf: [], max: 360,
+  reset(){ this.s=[]; this.pk=[]; this.bBuf=[]; },
+
+  push(v){
+    const t = performance.now();
+    this.s.push({v,t});
+    if(this.s.length > this.max) this.s.shift();
+    if(this.s.length > 60) this._detect();
+  },
+
+  _ma(a,w=7){ return a.map((_,i)=>{ const sl=a.slice(Math.max(0,i-w),i+1); return sl.reduce((x,y)=>x+y,0)/sl.length; }); },
+
+  _detect(){
+    const raw=this.s.map(x=>x.v), sm=this._ma(raw,7), N=sm.length;
+    const win=sm.slice(-60), mean=win.reduce((a,b)=>a+b,0)/win.length;
+    const mx=Math.max(...win), thr=mean+(mx-mean)*0.42;
+    const i=N-2; if(i<3) return;
+    if(sm[i]>sm[i-1] && sm[i]>sm[i+1] && sm[i]>thr){
+      const t=this.s[i].t, last=this.pk[this.pk.length-1];
+      if(!last || t-last>350){
+        this.pk.push(t);
+        if(this.pk.length>24) this.pk.shift();
+        this._calcBPM();
+      }
+    }
+  },
+
+  _calcBPM(){
+    if(this.pk.length<3) return;
+    const iv=[];
+    for(let i=1;i<this.pk.length;i++){const d=this.pk[i]-this.pk[i-1]; if(d>333&&d<1700)iv.push(d);}
+    if(iv.length<2) return;
+    const avg=iv.reduce((a,b)=>a+b,0)/iv.length, bpm=Math.round(60000/avg);
+    if(bpm>=38&&bpm<=185){this.bBuf.push(bpm); if(this.bBuf.length>6)this.bBuf.shift();}
+  },
+
+  getBPM(){ if(!this.bBuf.length)return null; return Math.round(this.bBuf.reduce((a,b)=>a+b,0)/this.bBuf.length); },
+  getRR(){ const b=this.getBPM(); return b?Math.round(60000/b):null; },
+
+  getHRV(){
+    if(this.pk.length<4) return null;
+    const iv=[];
+    for(let i=1;i<this.pk.length;i++){const d=this.pk[i]-this.pk[i-1];if(d>333&&d<1700)iv.push(d);}
+    if(iv.length<3) return null;
+    const m=iv.reduce((a,b)=>a+b,0)/iv.length;
+    return Math.round(Math.sqrt(iv.reduce((a,b)=>a+(b-m)**2,0)/iv.length));
+  },
+
+  getCoherence(){
+    if(this.pk.length<6) return 0;
+    const iv=[];
+    for(let i=1;i<this.pk.length;i++){const d=this.pk[i]-this.pk[i-1];if(d>333&&d<1700)iv.push(d);}
+    if(iv.length<5) return 0;
+    const m=iv.reduce((a,b)=>a+b,0)/iv.length;
+    const cv=Math.sqrt(iv.reduce((a,b)=>a+(b-m)**2,0)/iv.length)/m;
+    return Math.max(0,Math.min(100,Math.round(100-cv*380)));
+  },
+
+  getQuality(){
+    if(this.s.length<40) return 0;
+    const r=this.s.slice(-40).map(x=>x.v);
+    const m=r.reduce((a,b)=>a+b,0)/r.length;
+    if(m<0.002) return 5;
+    const cv=Math.sqrt(r.reduce((a,b)=>a+(b-m)**2,0)/r.length)/m;
+    if(cv<0.003) return 8;
+    if(cv>0.18) return 22;
+    return Math.min(100,Math.max(12,Math.round(cv*1100)));
+  },
+
+  getSig(pts=180){
+    if(this.s.length<10) return [];
+    const raw=this.s.slice(-pts).map(x=>x.v), sm=this._ma(raw,5);
+    const mn=Math.min(...sm), mx=Math.max(...sm), rng=mx-mn||1;
+    return sm.map(v=>(v-mn)/rng);
+  }
+};
+
+// ══════════════════════════════════════
+// STATE
+// ══════════════════════════════════════
+let stream_=null, track_=null, rafId=null, startT=null, durTim=null;
+let brTim=null, brPhase='inhale';
+let breathCycle={in:5500,out:5500};
+let sessions=[];
+try{ sessions=JSON.parse(localStorage.getItem('cs_sess')||'[]'); }catch(e){}
+
+// ══════════════════════════════════════
+// START MEASURE
+// ══════════════════════════════════════
+async function startMeasure(){
+  showP('req');
+  try{
+    stream_=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720},frameRate:{ideal:30,min:20}}
+    });
+  }catch(e){ showErr(e); return; }
+
+  const vid=document.getElementById('ppgVid');
+  vid.srcObject=stream_;
+  try{ await vid.play(); }catch(e){}
+
+  track_=stream_.getVideoTracks()[0];
+  const caps=track_.getCapabilities?track_.getCapabilities():{};
+  const ti=document.getElementById('torchInfo');
+  if(caps.torch){
+    try{
+      await track_.applyConstraints({advanced:[{torch:true}]});
+      ti.textContent='🔦 Flash LED activé — posez le doigt sur le flash et la caméra.';
+      ti.style.color='var(--cyan)';
+    }catch(e){ ti.textContent='⚠ Flash non activé — posez quand même le doigt sur la caméra.'; }
+  }else{
+    ti.textContent='ℹ Posez l\'index sur la caméra arrière, flash facultatif.';
+  }
+
+  PPG.reset();
+  startT=performance.now();
+  showP('act');
+  startDurTimer();
+  startBreath();
+  rafId=requestAnimationFrame(frame);
+}
+
+// ══════════════════════════════════════
+// FRAME LOOP
+// ══════════════════════════════════════
+const prc=document.getElementById('prc');
+const pctx=prc.getContext('2d');
+prc.width=80; prc.height=80;
+
+function frame(){
+  const vid=document.getElementById('ppgVid');
+  if(vid.readyState>=2){
+    pctx.drawImage(vid,0,0,80,80);
+    const d=pctx.getImageData(0,0,80,80).data;
+    let r=0; for(let i=0;i<d.length;i+=4)r+=d[i];
+    PPG.push((r/(d.length/4))/255);
+    updateUI();
+  }
+  rafId=requestAnimationFrame(frame);
+}
+
+// ══════════════════════════════════════
+// UI UPDATE
+// ══════════════════════════════════════
+const sc=document.getElementById('signalCanvas');
+const sctx=sc.getContext('2d');
+
+function updateUI(){
+  const bpm=PPG.getBPM(), hrv=PPG.getHRV(), rr=PPG.getRR();
+  const coh=PPG.getCoherence(), q=PPG.getQuality();
+
+  // BPM
+  const bv=document.getElementById('bpmV');
+  if(bpm){ bv.textContent=bpm; bv.style.animation='none'; setTimeout(()=>bv.style.animation='hb .3s ease',10); }
+  else bv.textContent='--';
+
+  const st=document.getElementById('bpmSt');
+  st.textContent=q>50?'✅ Signal stable — restez immobile':'⚠ Qualité faible — ajustez la position du doigt';
+  st.style.color=q>50?'var(--green)':'var(--orange)';
+
+  document.getElementById('sHRV').textContent=hrv??'--';
+  document.getElementById('sRR').textContent=rr??'--';
+
+  document.getElementById('qFill').style.width=q+'%';
+  document.getElementById('qPct').textContent=q+'%';
+
+  // Gauge
+  const circ=2*Math.PI*50;
+  document.getElementById('gProg').style.strokeDasharray=circ;
+  document.getElementById('gProg').style.strokeDashoffset=circ-(circ*coh/100);
+  document.getElementById('gVal').innerHTML=coh+'<span style="font-size:16px">%</span>';
+
+  // Signal
+  drawSig();
+}
+
+function drawSig(){
+  const W=sc.offsetWidth||sc.width, H=86;
+  sc.width=W; sc.height=H;
+  sctx.clearRect(0,0,W,H);
+
+  // Grid
+  sctx.strokeStyle='rgba(255,45,85,.06)'; sctx.lineWidth=.5;
+  for(let x=0;x<W;x+=28){sctx.beginPath();sctx.moveTo(x,0);sctx.lineTo(x,H);sctx.stroke();}
+  for(let y=0;y<H;y+=18){sctx.beginPath();sctx.moveTo(0,y);sctx.lineTo(W,y);sctx.stroke();}
+
+  const sig=PPG.getSig(Math.max(20,Math.floor(W/2)));
+  if(sig.length<5) return;
+  const step=W/(sig.length-1);
+  sctx.beginPath();
+  sctx.strokeStyle='#ff2d55'; sctx.lineWidth=1.8;
+  sctx.shadowColor='rgba(255,45,85,.5)'; sctx.shadowBlur=5;
+  sig.forEach((v,i)=>{ const x=i*step, y=H-6-v*(H-14); i===0?sctx.moveTo(x,y):sctx.lineTo(x,y); });
+  sctx.stroke(); sctx.shadowBlur=0;
+}
+
+// ══════════════════════════════════════
+// STOP / RESULTS
+// ══════════════════════════════════════
+function stopMeasure(){
+  if(rafId)cancelAnimationFrame(rafId);
+  stopBreath(); clearInterval(durTim);
+  if(track_){try{track_.applyConstraints({advanced:[{torch:false}]});}catch(e){}}
+  if(stream_){stream_.getTracks().forEach(t=>t.stop()); stream_=null;}
+
+  const dur=Math.round((performance.now()-startT)/1000);
+  const bpm=PPG.getBPM()||null, coh=PPG.getCoherence();
+
+  document.getElementById('rBpm').textContent=bpm??'--';
+  document.getElementById('rCoh').textContent=coh+'%';
+  document.getElementById('rDur').textContent=dur+'s';
+
+  let msg='';
+  if(bpm){
+    if(coh>=80) msg=`🎯 <strong>Excellent !</strong> Cohérence de ${coh}% — effets positifs sur le SNA significatifs.`;
+    else if(coh>=50) msg=`💪 Bonne séance ! Cohérence ${coh}% — continuez pour dépasser le seuil des 80%.`;
+    else msg=`📈 Cohérence ${coh}% — synchronisez la respiration avec le guide pour améliorer le score.`;
+  } else {
+    msg='⚠ Signal insuffisant — assurez-vous de couvrir flash + caméra avec le doigt immobile.';
+  }
+  document.getElementById('rMsg').innerHTML=msg;
+  window._last={bpm,coh,dur,date:new Date().toISOString()};
+  document.getElementById('saveBtn').textContent='💾 Sauvegarder';
+  document.getElementById('saveBtn').style.background='';
+  showP('res');
+}
+
+function saveSession(){
+  if(!window._last) return;
+  sessions.unshift(window._last);
+  if(sessions.length>50) sessions.pop();
+  try{ localStorage.setItem('cs_sess',JSON.stringify(sessions)); }catch(e){}
+  renderHistory();
+  const b=document.getElementById('saveBtn');
+  b.textContent='✅ Sauvegardé !';
+  b.style.background='linear-gradient(135deg,var(--green),#1a8c40)';
+}
+
+function resetMeasure(){
+  if(stream_){stream_.getTracks().forEach(t=>t.stop()); stream_=null;}
+  if(rafId)cancelAnimationFrame(rafId);
+  stopBreath(); clearInterval(durTim);
+  PPG.reset();
+  document.getElementById('bpmV').textContent='--';
+  document.getElementById('sDur').textContent='0s';
+  showP('idle');
+}
+
+// ══════════════════════════════════════
+// PANELS
+// ══════════════════════════════════════
+function showP(n){
+  ['idle','req','act','res','err'].forEach(p=>{
+    const el=document.getElementById('p-'+p);
+    if(el) el.classList.toggle('on',p===n);
+  });
+}
+
+function showErr(e){
+  let m='Impossible d\'accéder à la caméra.', h='Vérifiez les permissions caméra. L\'application nécessite HTTPS ou localhost.';
+  if(e.name==='NotAllowedError'){m='Accès caméra refusé.';h='iOS : Réglages → Safari → Caméra → Autoriser. Android : Paramètres navigateur → Autorisations → Caméra.';}
+  else if(e.name==='NotFoundError'){m='Aucune caméra arrière trouvée.';h='Cet appareil n\'a pas de caméra arrière accessible. Sur desktop, la mesure PPG requiert une caméra physique.';}
+  else if(e.name==='NotReadableError'){m='Caméra déjà utilisée par une autre app.';h='Fermez les autres applications utilisant la caméra.';}
+  document.getElementById('eMsg').textContent=m;
+  document.getElementById('eHint').textContent=h;
+  showP('err');
+}
+
+// ══════════════════════════════════════
+// TIMERS
+// ══════════════════════════════════════
+function startDurTimer(){
+  durTim=setInterval(()=>{
+    const s=Math.round((performance.now()-startT)/1000);
+    document.getElementById('sDur').textContent=s+'s';
+  },1000);
+}
+
+// ══════════════════════════════════════
+// BREATHING GUIDE
+// ══════════════════════════════════════
+function startBreath(){ brPhase='inhale'; updateBreathTxt(); schedBreath(); }
+function stopBreath(){ clearTimeout(brTim); }
+function schedBreath(){
+  const d=brPhase==='inhale'?breathCycle.in:breathCycle.out;
+  brTim=setTimeout(()=>{ brPhase=brPhase==='inhale'?'exhale':'inhale'; updateBreathTxt(); schedBreath(); },d);
+}
+function updateBreathTxt(){
+  const el=document.getElementById('brTxt'); if(!el)return;
+  el.style.opacity='0';
+  setTimeout(()=>{
+    el.textContent=brPhase==='inhale'?'INSPIREZ':'EXPIREZ';
+    el.style.color=brPhase==='inhale'?'var(--blue)':'var(--cyan)';
+    el.style.opacity='1';
+  },280);
+  if(!el.style.transition) el.style.transition='opacity .3s';
+}
+function setMode(m,el){
+  breathCycle=m==='relax'?{in:5000,out:6000}:{in:4000,out:4000};
+  document.querySelectorAll('.mpl').forEach(p=>{ p.style.opacity='.55'; p.style.fontWeight='600'; });
+  if(el){ el.style.opacity='1'; el.style.fontWeight='800'; }
+}
+
+// ══════════════════════════════════════
+// HISTORY
+// ══════════════════════════════════════
+function renderHistory(){
+  const c=document.getElementById('histCont');
+  if(!sessions.length){
+    c.innerHTML='<div class="hempty"><div class="em">📋</div><p>Aucune séance enregistrée.<br>Effectuez une mesure et sauvegardez-la !</p></div>';
+    return;
+  }
+  const rows=sessions.map(s=>{
+    const d=new Date(s.date);
+    const ds=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    const badge=s.coh>=80?'<span class="hbadge hb-g">✓ Excellent</span>':'<span class="hbadge hb-a">~ Correct</span>';
+    return `<div class="hrow">
+      <span class="hdate">${ds}</span>
+      <div class="hvals">
+        <div class="hv"><span class="hvn" style="color:var(--red)">${s.bpm??'--'}</span><div class="hvk">BPM</div></div>
+        <div class="hv"><span class="hvn" style="color:var(--cyan)">${s.coh}%</span><div class="hvk">Cohérence</div></div>
+        <div class="hv"><span class="hvn" style="color:var(--green)">${s.dur}s</span><div class="hvk">Durée</div></div>
+      </div>${badge}
+    </div>`;
+  }).join('');
+  c.innerHTML=`<div class="hlist">${rows}</div><button class="clearbtn" onclick="clearHist()">🗑 Effacer l'historique</button>`;
+}
+function clearHist(){
+  if(!confirm('Effacer tout l\'historique ?'))return;
+  sessions=[]; try{localStorage.removeItem('cs_sess');}catch(e){} renderHistory();
+}
+
+// ══════════════════════════════════════
+// SHARE
+// ══════════════════════════════════════
+function shareResult(p){
+  const r=window._last, t=r?`Ma séance CardioSync : ${r.bpm} BPM, cohérence ${r.coh}% — Analyse PPG via flash iPhone 💓`:'CardioSync — Cohérence cardiaque via flash iPhone 💓';
+  if(p==='mail') window.open('mailto:?subject=Ma séance CardioSync&body='+encodeURIComponent(t));
+  if(p==='fb')   window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(location.href)+'&quote='+encodeURIComponent(t));
+  if(p==='tw')   window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(t));
+}
+
+// ══════════════════════════════════════
+// NAV
+// ══════════════════════════════════════
+function scrollToMeasure(){ document.getElementById('mesure').scrollIntoView({behavior:'smooth'}); }
+function goto(id){ document.getElementById(id).scrollIntoView({behavior:'smooth'}); }
+
+window.addEventListener('scroll',()=>{
+  const n=document.getElementById('mn');
+  n.style.background=window.scrollY>40?'rgba(2,5,8,.93)':'rgba(2,5,8,.82)';
+  const ids=['mesure','fonctionnalites','analyse'];
+  const links=document.querySelectorAll('.nav-links a');
+  let cur='';
+  ids.forEach(id=>{ const el=document.getElementById(id); if(el&&window.scrollY>=el.offsetTop-130)cur=id; });
+  links.forEach(a=>{ const h=a.getAttribute('href').replace('#',''); a.classList.toggle('active',h===cur); });
+});
+
+// Scroll reveal
+const ro=new IntersectionObserver(en=>en.forEach(e=>{ if(e.isIntersecting)e.target.classList.add('vis'); }),{threshold:.07});
+document.querySelectorAll('.reveal').forEach(el=>ro.observe(el));
+
+// Card mouse
+document.querySelectorAll('.fcard').forEach(c=>c.addEventListener('mousemove',e=>{
+  const r=c.getBoundingClientRect();
+  c.style.setProperty('--mx',((e.clientX-r.left)/r.width*100)+'%');
+  c.style.setProperty('--my',((e.clientY-r.top)/r.height*100)+'%');
+}));
+
+// Heartbeat animation
+const ast=document.createElement('style');
+ast.textContent='@keyframes hb{0%,100%{transform:scale(1)}15%{transform:scale(1.06)}30%{transform:scale(1)}}';
+document.head.appendChild(ast);
+
+// Idle phone animation
+let idlB=68;
+setInterval(()=>{
+  idlB+=(Math.random()-.48)*2;
+  idlB=Math.max(60,Math.min(80,idlB));
+  const el=document.getElementById('idleBpm');
+  if(el)el.textContent=Math.round(idlB);
+},1300);
+
+// Init
+renderHistory();
+</script>
+</body>
+</html>
