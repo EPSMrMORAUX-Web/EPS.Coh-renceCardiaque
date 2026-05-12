@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>CardioSync — Cohérence Cardiaque</title>
+<style>
+:root{
+  --cy:#00e5ff;--cyd:rgba(0,229,255,.15);--cyg:rgba(0,229,255,.4);
+  --re:#ff2d55;--red:rgba(255,45,85,.18);--bl:#0a84ff;
+  --gr:#30d158;--or:#ff9f0a;--go:#ffd60a;
+  --bg:#020508;--bg2:#050c14;
+  --gl:rgba(255,255,255,.04);--gb:rgba(255,255,255,.08);
+  --t:#e8f4f8;--td:rgba(232,244,248,.5);--tm:rgba(232,244,248,.22);
+  --mo:'SF Mono','Fira Code',monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--t);font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;overflow-x:hidden;line-height:1.6}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(0,229,255,.023) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.023) 1px,transparent 1px);
+  background-size:55px 55px;mask-image:radial-gradient(ellipse 90% 90% at 50% 50%,black 30%,transparent 100%)}
+#ptcl{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.pt{position:absolute;border-radius:50%;opacity:0;animation:fpt linear infinite}
+@keyframes fpt{0%{transform:translateY(100vh) scale(0);opacity:0}10%{opacity:.55}90%{opacity:.12}100%{transform:translateY(-8vh);opacity:0}}
+
+/* ─── NAV ─── */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;
+  padding:15px 36px;background:rgba(2,5,8,.75);backdrop-filter:blur(20px);border-bottom:1px solid var(--gb);transition:.3s}
+.nlogo{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:800;letter-spacing:-.4px;text-decoration:none;color:var(--t)}
+.nlogo svg{width:30px;height:22px}
+.pdot{width:7px;height:7px;border-radius:50%;background:var(--re);display:inline-block;margin-left:3px;animation:pdot 1.1s ease-in-out infinite}
+@keyframes pdot{0%,100%{box-shadow:0 0 0 0 rgba(255,45,85,.8)}50%{box-shadow:0 0 0 5px rgba(255,45,85,0)}}
+.nlinks{display:flex;gap:5px}
+.nlinks a{padding:7px 14px;border-radius:9px;color:var(--td);text-decoration:none;font-size:13px;font-weight:500;transition:.2s}
+.nlinks a:hover,.nlinks a.act{color:var(--cy);background:var(--cyd)}
+.ncta{padding:9px 22px;border-radius:22px;background:linear-gradient(135deg,var(--cy),var(--bl));color:#000;font-weight:700;font-size:13px;border:none;cursor:pointer;transition:.2s}
+.ncta:hover{opacity:.85;transform:scale(1.03)}
+@media(max-width:680px){nav{padding:12px 18px}.nlinks a{padding:6px 9px;font-size:12px}}
+@media(max-width:480px){.nlinks a:last-child{display:none}}
+
+/* ─── HERO ─── */
+.hero{min-height:100vh;position:relative;display:flex;align-items:center;justify-content:center;padding:100px 36px 60px;overflow:hidden;z-index:1}
+.orb{position:absolute;border-radius:50%;filter:blur(100px);pointer-events:none}
+.o1{width:580px;height:580px;top:-80px;left:-120px;background:radial-gradient(circle,rgba(0,229,255,.07),transparent 70%)}
+.o2{width:500px;height:500px;bottom:-40px;right:-80px;background:radial-gradient(circle,rgba(10,132,255,.09),transparent 70%)}
+.o3{width:280px;height:280px;top:50%;left:50%;transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(255,45,85,.05),transparent 70%);animation:op 4s ease-in-out infinite}
+@keyframes op{0%,100%{opacity:.5;transform:translate(-50%,-50%) scale(1)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.3)}}
+.hero-inner{position:relative;z-index:2;max-width:1160px;width:100%;display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:center}
+@media(max-width:860px){.hero-inner{grid-template-columns:1fr}.hright{display:none!important}}
+
+.hleft{display:flex;flex-direction:column;gap:26px}
+.hbadge{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:22px;background:var(--cyd);border:1px solid rgba(0,229,255,.3);font-size:11px;font-family:var(--mo);color:var(--cy);letter-spacing:1px;text-transform:uppercase;width:fit-content}
+.bdot{width:5px;height:5px;border-radius:50%;background:var(--cy);animation:pdot 1s infinite}
+h1{font-size:clamp(30px,4.5vw,56px);font-weight:800;letter-spacing:-1.5px;line-height:1.08;background:linear-gradient(140deg,#fff 35%,var(--cy));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hsub{font-size:16px;color:var(--td);line-height:1.7;max-width:460px}
+.fcallout{padding:20px 24px;background:linear-gradient(135deg,rgba(255,45,85,.1),rgba(255,165,0,.07));border:1px solid rgba(255,45,85,.32);border-radius:16px;position:relative;overflow:hidden}
+.fcallout::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,200,0,.04),transparent);animation:shim 3s infinite}
+@keyframes shim{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.fcallout-lbl{font-size:10px;font-family:var(--mo);color:var(--re);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.fcallout-lbl::before{content:'';width:22px;height:1px;background:var(--re)}
+.fcallout p{font-size:15px;line-height:1.65}
+.fcallout strong{color:var(--go)}
+.hdisc{font-size:11px;color:var(--tm);font-style:italic;padding-left:12px;border-left:2px solid rgba(255,255,255,.08)}
+.hbtns{display:flex;gap:12px;flex-wrap:wrap}
+.btng{padding:13px 30px;border-radius:28px;background:linear-gradient(135deg,var(--cy),var(--bl));color:#000;font-weight:800;font-size:14px;border:none;cursor:pointer;transition:.22s;box-shadow:0 0 40px rgba(0,229,255,.28)}
+.btng:hover{transform:translateY(-2px);box-shadow:0 8px 50px rgba(0,229,255,.42)}
+.btno{padding:13px 24px;border-radius:28px;background:transparent;color:var(--td);font-weight:600;font-size:14px;border:1px solid var(--gb);cursor:pointer;transition:.22s}
+.btno:hover{border-color:var(--cyg);color:var(--cy)}
+
+/* iPhone */
+.hright{display:flex;align-items:center;justify-content:center;position:relative}
+.ipwrap{position:relative;width:240px}
+.iphone{width:200px;height:378px;background:linear-gradient(170deg,#1a1a2e,#0d0d1a);border-radius:40px;border:2px solid rgba(255,255,255,.12);position:relative;box-shadow:0 0 60px rgba(0,229,255,.08),0 40px 80px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.07);overflow:hidden;margin:0 auto}
+.iscr{position:absolute;inset:15px;border-radius:28px;background:#000;overflow:hidden}
+.iscr-bg{position:absolute;inset:0;background:radial-gradient(circle at 50% 40%,rgba(255,45,85,.28),rgba(0,0,0,.9) 70%)}
+.iscr-c{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:16px}
+.ilbl{font-size:8px;font-family:var(--mo);color:rgba(255,255,255,.4);letter-spacing:3px;text-transform:uppercase}
+.ibpm{font-family:var(--mo);font-size:38px;font-weight:800;color:var(--re);line-height:1;text-shadow:0 0 24px rgba(255,45,85,.7)}
+.iecg{width:100%;height:28px;overflow:hidden;margin-top:4px}
+.iecg svg{width:200%;animation:escr 2.4s linear infinite}
+@keyframes escr{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.cammod{position:absolute;top:16px;right:16px;width:50px;height:76px;background:linear-gradient(135deg,#1a1a2e,#0a0a15);border-radius:13px;border:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.camlens{width:20px;height:20px;border-radius:50%;background:radial-gradient(circle,#111,#222);border:2px solid rgba(255,255,255,.14)}
+.camflash{width:11px;height:11px;border-radius:3px;animation:cfl 1.3s ease-in-out infinite}
+@keyframes cfl{0%,100%{background:#2a2a10;box-shadow:none}45%,55%{background:var(--go);box-shadow:0 0 18px rgba(255,214,10,.9),0 0 36px rgba(255,200,0,.5)}}
+.finger{position:absolute;top:10px;right:10px;width:64px;height:90px;animation:fhov 3s ease-in-out infinite;z-index:10}
+@keyframes fhov{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.srings{position:absolute;top:10px;right:10px;pointer-events:none;z-index:5}
+.sr{position:absolute;border-radius:50%;border:1px solid var(--re);animation:srx 2.4s ease-out infinite}
+.sr1{width:78px;height:78px;top:3px;right:1px}.sr2{width:108px;height:108px;top:-12px;right:-13px;animation-delay:.8s}.sr3{width:142px;height:142px;top:-29px;right:-30px;animation-delay:1.6s}
+@keyframes srx{0%{opacity:.8;transform:scale(.78)}100%{opacity:0;transform:scale(1)}}
+.fbpm{position:absolute;top:-24px;left:-56px;background:var(--gl);backdrop-filter:blur(14px);border:1px solid var(--gb);border-radius:13px;padding:12px 16px;text-align:center;animation:fcard 4s ease-in-out infinite}
+.fbpm-n{font-family:var(--mo);font-size:26px;font-weight:800;color:var(--re);display:block;line-height:1;text-shadow:0 0 14px rgba(255,45,85,.6)}
+.fbpm-l{font-size:9px;color:var(--td);letter-spacing:3px;text-transform:uppercase;font-family:var(--mo)}
+.fcoh{position:absolute;bottom:22px;left:-64px;background:var(--gl);backdrop-filter:blur(14px);border:1px solid rgba(0,229,255,.18);border-radius:13px;padding:12px 16px;animation:fcard 4s ease-in-out infinite 2s}
+.fcoh-n{font-family:var(--mo);font-size:22px;font-weight:800;color:var(--cy);display:block;line-height:1;text-shadow:0 0 14px rgba(0,229,255,.6)}
+.fcoh-l{font-size:9px;color:var(--td);letter-spacing:2px;text-transform:uppercase;font-family:var(--mo)}
+@keyframes fcard{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-7px) rotate(0)}}
+
+/* ─── SECTIONS ─── */
+.sec{position:relative;z-index:1;padding:90px 36px;max-width:1160px;margin:0 auto}
+.slbl{font-size:11px;font-family:var(--mo);color:var(--cy);letter-spacing:3px;text-transform:uppercase;margin-bottom:15px;display:flex;align-items:center;gap:12px}
+.slbl::before{content:'';width:36px;height:1px;background:var(--cy)}
+h2{font-size:clamp(26px,3.5vw,42px);font-weight:800;letter-spacing:-1px;line-height:1.15;background:linear-gradient(140deg,#fff 50%,var(--cy));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:14px}
+.sint{font-size:16px;color:var(--td);max-width:580px;line-height:1.7;margin-bottom:56px}
+
+/* ─── BLOCS ─── */
+.how-grid{display:flex;flex-direction:column;gap:36px}
+.blk{background:var(--gl);border:1px solid var(--gb);border-radius:24px;padding:38px;backdrop-filter:blur(10px);display:grid;gap:36px;position:relative;overflow:hidden;transition:border-color .3s,transform .3s}
+.blk:hover{border-color:rgba(0,229,255,.22);transform:translateY(-2px)}
+.blk::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--cy),transparent);opacity:0;transition:opacity .3s}
+.blk:hover::before{opacity:1}
+.blk-a{grid-template-columns:1fr 1fr;border-left:3px solid var(--re);background:linear-gradient(135deg,rgba(255,45,85,.04),rgba(2,5,8,.9))}
+.blk-b{grid-template-columns:1fr 1fr;border-left:3px solid var(--cy);background:linear-gradient(135deg,rgba(0,229,255,.03),rgba(2,5,8,.9))}
+.blk-c{grid-template-columns:1fr 1fr;border-left:3px solid var(--bl);background:linear-gradient(135deg,rgba(10,132,255,.04),rgba(2,5,8,.9))}
+@media(max-width:800px){.blk-a,.blk-b,.blk-c{grid-template-columns:1fr}}
+.btag{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:6px;font-size:10px;font-family:var(--mo);letter-spacing:1.5px;text-transform:uppercase;font-weight:700;width:fit-content;margin-bottom:8px}
+.ta{background:rgba(255,45,85,.14);color:var(--re);border:1px solid rgba(255,45,85,.28)}
+.tb{background:var(--cyd);color:var(--cy);border:1px solid rgba(0,229,255,.28)}
+.tc{background:rgba(10,132,255,.14);color:var(--bl);border:1px solid rgba(10,132,255,.28)}
+.btxt{display:flex;flex-direction:column;gap:13px;justify-content:center}
+h3{font-size:clamp(18px,2vw,24px);font-weight:700;letter-spacing:-.4px;line-height:1.2}
+.bdesc{font-size:15px;color:var(--td);line-height:1.75}
+.bdesc em{color:var(--cy);font-style:normal;font-weight:500}
+.bnote{padding:14px 18px;background:rgba(0,229,255,.06);border:1px solid rgba(0,229,255,.2);border-radius:10px;font-size:14px;color:var(--t);font-weight:500}
+.bnote strong{color:var(--cy)}
+.bvis{display:flex;align-items:center;justify-content:center;min-height:220px;position:relative}
+
+/* ─── MODE TABS ─── */
+.mtabs{display:flex;gap:8px;margin-bottom:18px}
+.mtab{padding:9px 18px;border-radius:10px;border:1px solid var(--gb);background:transparent;color:var(--td);font-size:13px;font-weight:600;cursor:pointer;transition:.2s;white-space:nowrap;font-family:inherit}
+.mtab:hover{border-color:rgba(255,255,255,.2);color:var(--t)}
+.mtab.tm{background:rgba(255,45,85,.14);border-color:rgba(255,45,85,.35);color:var(--re)}
+.mtab.tp{background:var(--cyd);border-color:rgba(0,229,255,.35);color:var(--cy)}
+.mmode{display:none}.mmode.on{display:flex;flex-direction:column;gap:14px}
+
+/* ════════════════════════════════════
+   MODE MANUEL — LAYOUT FIXÉ
+   Bouton TAP toujours visible et grand
+   Timer = barre de progression séparée
+   ════════════════════════════════════ */
+.man-layout{display:flex;flex-direction:column;gap:14px}
+.man-info{padding:12px 16px;background:var(--gl);border:1px solid var(--gb);border-radius:10px;font-size:13px;color:var(--td);line-height:1.6}
+.man-info strong{color:var(--t)}
+/* Le compteur BPM attendu est affiché SÉPARÉMENT du bouton */
+.man-main{display:flex;align-items:center;gap:20px}
+/* Grand bouton tap — le compteur de battements est visible en permanence */
+.tap-btn{
+  width:140px;height:140px;flex-shrink:0;
+  border-radius:50%;
+  border:3px solid rgba(255,45,85,.35);
+  background:radial-gradient(circle at 42% 38%,rgba(255,45,85,.2),rgba(255,45,85,.06));
+  cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  transition:.12s;
+  -webkit-user-select:none;user-select:none;
+  position:relative;overflow:hidden;
+  touch-action:manipulation;
+}
+.tap-btn:active{transform:scale(.9);border-color:rgba(255,45,85,.85);box-shadow:0 0 30px rgba(255,45,85,.6),inset 0 0 20px rgba(255,45,85,.1)}
+.tap-btn::after{content:'';position:absolute;inset:0;border-radius:50%;background:rgba(255,255,255,.07);opacity:0;transition:.08s}
+.tap-btn:active::after{opacity:1}
+.tap-icon{font-size:28px;line-height:1;transition:.12s}
+.tap-num{font-family:var(--mo);font-size:34px;font-weight:800;color:var(--re);line-height:1;text-shadow:0 0 14px rgba(255,45,85,.6);transition:.12s}
+.tap-lbl{font-size:9px;color:var(--td);letter-spacing:2px;text-transform:uppercase;font-family:var(--mo)}
+/* Right side of tap zone */
+.man-right{flex:1;display:flex;flex-direction:column;gap:10px}
+.man-instruction{font-size:13px;color:var(--td);line-height:1.6}
+.man-status{font-size:13px;font-weight:600;color:var(--cy);font-family:var(--mo);min-height:20px}
+/* Timer bar — hidden until first tap */
+.timer-bar{display:none;flex-direction:column;gap:5px}
+.timer-top{display:flex;justify-content:space-between;align-items:center}
+.timer-label{font-size:10px;font-family:var(--mo);color:var(--td);letter-spacing:2px;text-transform:uppercase}
+.timer-count{font-family:var(--mo);font-size:22px;font-weight:800;color:var(--re);text-shadow:0 0 12px rgba(255,45,85,.55);line-height:1}
+.timer-track{width:100%;height:7px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden}
+.timer-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--re),var(--or));transition:width .2s linear;width:100%}
+.man-btns{display:flex;gap:10px;margin-top:2px}
+.btn-man-reset{padding:7px 18px;border-radius:9px;background:transparent;border:1px solid var(--gb);color:var(--td);font-size:12px;cursor:pointer;transition:.2s;display:none;font-family:inherit}
+.btn-man-reset:hover{border-color:rgba(255,255,255,.2);color:var(--t)}
+
+/* ════════════════════════════════════
+   MODE PPG — FLASH
+   ════════════════════════════════════ */
+.ppg-layout{display:flex;flex-direction:column;gap:12px}
+.ppg-warning{padding:12px 16px;background:rgba(255,159,10,.08);border:1px solid rgba(255,159,10,.22);border-radius:10px;font-size:13px;color:var(--or);line-height:1.6}
+.ppg-warning strong{color:#ffb830}
+.ppg-info{padding:11px 14px;background:var(--gl);border:1px solid var(--gb);border-radius:9px;font-size:11px;color:var(--td);line-height:1.55}
+.ppg-info strong{color:var(--t)}
+.ppg-btns{display:flex;gap:10px}
+.bppg-st{padding:12px 24px;border-radius:11px;background:linear-gradient(135deg,var(--re),rgba(255,80,0,.9));color:#fff;font-weight:800;font-size:14px;border:none;cursor:pointer;transition:.22s;box-shadow:0 0 28px rgba(255,45,85,.25);display:flex;align-items:center;gap:8px;font-family:inherit}
+.bppg-st:hover{transform:translateY(-1px);box-shadow:0 6px 36px rgba(255,45,85,.38)}
+.bppg-sp{padding:12px 20px;border-radius:11px;background:var(--red);border:1px solid rgba(255,45,85,.22);color:var(--re);font-weight:700;font-size:14px;cursor:pointer;transition:.2s;display:none;font-family:inherit}
+.bppg-sp:hover{background:rgba(255,45,85,.22)}
+/* PPG stabilisation countdown */
+.ppg-stab{display:none;flex-direction:column;gap:8px;padding:14px;background:var(--gl);border:1px solid rgba(0,229,255,.15);border-radius:11px;text-align:center}
+.ppg-stab-txt{font-size:13px;color:var(--td)}
+.ppg-stab-count{font-family:var(--mo);font-size:28px;font-weight:800;color:var(--cy);text-shadow:0 0 14px rgba(0,229,255,.55)}
+.ppg-stab-bar{height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;width:100%}
+.ppg-stab-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--bl),var(--cy));transition:width .2s linear;width:0%}
+.sigwrap{background:rgba(0,0,0,.5);border:1px solid rgba(255,45,85,.18);border-radius:12px;overflow:hidden;position:relative;display:none}
+.siglb{position:absolute;top:6px;left:10px;font-size:9px;font-family:var(--mo);color:rgba(255,45,85,.5);letter-spacing:2px;text-transform:uppercase;z-index:2}
+#sigC{display:block;width:100%;height:76px}
+.qrow{display:none;align-items:center;gap:10px;padding:9px 13px;background:var(--gl);border:1px solid var(--gb);border-radius:10px}
+.qlb{font-size:10px;font-family:var(--mo);color:var(--td);text-transform:uppercase;letter-spacing:1px;white-space:nowrap}
+.qtr{flex:1;height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden}
+.qfi{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--or),var(--gr));transition:width .5s;width:0%}
+.qpt{font-size:10px;font-family:var(--mo);color:var(--td);width:28px;text-align:right}
+.torch-inf{padding:8px 12px;border-radius:9px;background:var(--gl);border:1px solid var(--gb);font-size:11px;color:var(--td);font-family:var(--mo);text-align:center;display:none}
+.motwarn{padding:8px 12px;border-radius:9px;background:rgba(255,159,10,.1);border:1px solid rgba(255,159,10,.25);font-size:11px;color:var(--or);font-family:var(--mo);text-align:center;display:none}
+
+/* ─── RÉSULTAT PARTAGÉ ─── */
+.bpm-result{padding:20px;background:var(--gl);border:1px solid var(--gb);border-radius:16px;display:none;margin-top:4px}
+.bpm-result.show{display:block}
+.res-main{text-align:center;margin-bottom:14px}
+.res-val{font-family:var(--mo);font-size:64px;font-weight:800;color:var(--re);line-height:1;text-shadow:0 0 32px rgba(255,45,85,.55);display:block;animation:hb .35s ease}
+.res-lbl{font-size:11px;color:var(--td);letter-spacing:4px;text-transform:uppercase;font-family:var(--mo);margin-top:4px}
+.res-src{font-size:11px;color:var(--td);margin-top:5px;font-family:var(--mo)}
+.stat3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.stb{padding:9px 6px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.05);border-radius:9px;text-align:center}
+.stv{font-family:var(--mo);font-size:16px;font-weight:700;color:var(--cy);display:block;text-shadow:0 0 8px rgba(0,229,255,.4)}
+.stk{font-size:8px;color:var(--td);letter-spacing:1.5px;text-transform:uppercase;margin-top:1px}
+.res-btns{display:flex;gap:10px;justify-content:center;margin-top:14px}
+.bsave{padding:10px 22px;border-radius:22px;background:linear-gradient(135deg,var(--cy),var(--bl));color:#000;font-weight:700;font-size:13px;border:none;cursor:pointer;transition:.2s}
+.bsave:hover{opacity:.85;transform:scale(1.03)}
+.brnew{padding:10px 18px;border-radius:22px;background:transparent;border:1px solid var(--gb);color:var(--td);font-weight:600;font-size:13px;cursor:pointer;transition:.2s;font-family:inherit}
+.brnew:hover{border-color:var(--cyg);color:var(--cy)}
+
+/* ECG panel */
+.ecg-panel{display:flex;flex-direction:column;gap:12px;width:100%}
+.ecg-hdr{display:flex;justify-content:space-between;align-items:center}
+.ecg-lbl{font-size:10px;font-family:var(--mo);color:var(--td);letter-spacing:2px;text-transform:uppercase}
+.ecg-bpm-disp{font-family:var(--mo);font-size:20px;font-weight:700;color:var(--re);text-shadow:0 0 10px rgba(255,45,85,.65)}
+.ecg-wrap{width:100%;height:96px;background:rgba(0,0,0,.45);border-radius:12px;border:1px solid rgba(255,45,85,.18);overflow:hidden;position:relative}
+.ecg-scan{position:absolute;top:0;bottom:0;width:2px;background:linear-gradient(180deg,transparent,var(--re),transparent);box-shadow:0 0 8px rgba(255,45,85,.7);animation:escan 2.5s linear infinite}
+@keyframes escan{from{left:0}to{left:100%}}
+#ecgC{width:100%;height:100%;display:block}
+.ecg-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.es{background:rgba(0,0,0,.3);border-radius:8px;padding:9px;text-align:center;border:1px solid rgba(255,255,255,.04)}
+.esv{font-family:var(--mo);font-size:15px;font-weight:700;color:var(--re);display:block}
+.esk{font-size:8px;color:var(--td);letter-spacing:1px;text-transform:uppercase}
+
+/* ─── BLOC B GAUGE ─── */
+.gcon{width:200px;height:200px;position:relative;display:flex;align-items:center;justify-content:center}
+.gsvg{width:100%;height:100%;transform:rotate(-90deg)}
+.gc-bg{fill:none;stroke:rgba(255,255,255,.05);stroke-width:12}
+.gc-prog{fill:none;stroke-width:12;stroke-linecap:round;stroke:url(#ggrd);stroke-dasharray:502;stroke-dashoffset:502;transition:stroke-dashoffset .9s ease;filter:drop-shadow(0 0 8px rgba(0,229,255,.65))}
+.gcenter{position:absolute;text-align:center}
+.gcval{font-family:var(--mo);font-size:42px;font-weight:800;color:var(--cy);line-height:1;display:block;text-shadow:0 0 20px rgba(0,229,255,.7)}
+.gcpct{font-size:18px}
+.gcsub{font-size:10px;color:var(--td);letter-spacing:2px;text-transform:uppercase;margin-top:4px;font-family:var(--mo)}
+.gc-thr{margin-top:12px;font-size:13px;color:var(--td);text-align:center}
+.gc-thr span{color:var(--cy);font-weight:700}
+.gc-fb{margin-top:8px;font-size:12px;font-family:var(--mo);color:var(--td);text-align:center;min-height:16px}
+
+/* ─── BLOC C BREATHING ─── */
+.brwrap{width:200px;display:flex;flex-direction:column;align-items:center;gap:16px}
+.brrw{position:relative;width:150px;height:150px;display:flex;align-items:center;justify-content:center}
+.brr{position:absolute;border-radius:50%;border:2px solid rgba(10,132,255,.28)}
+.br1{width:150px;height:150px;animation:brs 5.5s ease-in-out infinite}
+.br2{width:118px;height:118px;animation:brs 5.5s ease-in-out infinite .3s}
+.brcore{width:84px;height:84px;border-radius:50%;background:radial-gradient(circle at 36% 36%,rgba(10,132,255,.8),rgba(0,45,140,.45));border:1px solid rgba(10,132,255,.5);display:flex;align-items:center;justify-content:center;animation:brs 5.5s ease-in-out infinite;box-shadow:0 0 30px rgba(10,132,255,.42),0 0 60px rgba(10,132,255,.15)}
+@keyframes brs{0%,100%{transform:scale(.82);opacity:.65}45%{transform:scale(1.18);opacity:1}}
+.brtxt{font-size:14px;font-weight:700;font-family:var(--mo);letter-spacing:2.5px;text-transform:uppercase;transition:opacity .38s;color:var(--bl)}
+.brpace{display:flex;gap:8px}
+.bpd{width:6px;height:6px;border-radius:50%;background:var(--bl);opacity:.22;animation:bpa 5.5s ease-in-out infinite}
+.bpd:nth-child(1){animation-delay:0s}.bpd:nth-child(2){animation-delay:.5s}.bpd:nth-child(3){animation-delay:1s}.bpd:nth-child(4){animation-delay:1.5s}.bpd:nth-child(5){animation-delay:2s}
+@keyframes bpa{0%,100%{opacity:.18;transform:scale(1)}50%{opacity:1;transform:scale(1.6)}}
+.brmpills{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.brmp{padding:5px 14px;border-radius:18px;font-size:11px;font-weight:600;cursor:pointer;transition:.2s;border:1px solid}
+.brmp:hover{opacity:.78;transform:scale(1.04)}
+.brmr{background:rgba(0,229,255,.1);color:var(--cy);border-color:rgba(0,229,255,.24)}
+.brmb{background:var(--red);color:var(--re);border-color:rgba(255,45,85,.24)}
+.brrhythm{font-size:11px;font-family:var(--mo);color:var(--td)}
+
+/* ─── LES PLUS ─── */
+#plus{padding-top:40px}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));gap:22px}
+.pc{background:var(--gl);border:1px solid var(--gb);border-radius:20px;padding:30px;backdrop-filter:blur(10px);transition:.3s;cursor:default;position:relative;overflow:hidden}
+.pc::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at var(--mx,50%) var(--my,50%),rgba(0,229,255,.06),transparent 58%);opacity:0;transition:opacity .3s;pointer-events:none}
+.pc:hover{transform:translateY(-5px);border-color:rgba(0,229,255,.2);box-shadow:0 18px 55px rgba(0,0,0,.4)}
+.pc:hover::after{opacity:1}
+.fico{width:46px;height:46px;border-radius:13px;background:var(--cyd);border:1px solid rgba(0,229,255,.2);display:flex;align-items:center;justify-content:center;margin-bottom:18px}
+.fico svg{width:21px;height:21px;stroke:var(--cy);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.pc h4{font-size:17px;font-weight:700;margin-bottom:9px;letter-spacing:-.2px}
+.pc p{font-size:14px;color:var(--td);line-height:1.68}
+.srow{display:flex;gap:9px;margin-top:13px}
+.shb{padding:5px 13px;border-radius:8px;font-size:11px;font-weight:600;border:1px solid;cursor:pointer;background:transparent;transition:.2s}
+.shb:hover{opacity:.7}
+.sbm{color:var(--cy);border-color:rgba(0,229,255,.35)}
+.sbf{color:#1877f2;border-color:rgba(24,119,242,.35)}
+.sbt{color:#1da1f2;border-color:rgba(29,161,242,.35)}
+.mpills{display:flex;gap:9px;margin-top:12px;flex-wrap:wrap}
+.mpl{padding:5px 15px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;transition:.2s}
+.mpl:hover{opacity:.8;transform:scale(1.04)}
+.mplr{background:rgba(0,229,255,.12);color:var(--cy);border:1px solid rgba(0,229,255,.26)}
+.mplb{background:var(--red);color:var(--re);border:1px solid rgba(255,45,85,.26)}
+.sbars{display:flex;gap:3px;align-items:flex-end;height:46px;margin-top:14px}
+.spb{flex:1;border-radius:3px 3px 0 0;background:linear-gradient(180deg,var(--cy),rgba(0,229,255,.2));animation:spa 1.8s ease-in-out infinite;transform-origin:bottom}
+@keyframes spa{0%,100%{transform:scaleY(1)}50%{transform:scaleY(var(--h,.5))}}
+.mch{width:100%;height:54px;margin-top:13px;border-radius:8px;overflow:hidden;background:rgba(0,0,0,.3)}
+
+/* ─── ANALYSE ─── */
+#analyse{padding-top:40px}
+.hempty{text-align:center;padding:56px 18px;color:var(--tm);font-size:15px}
+.hempty .em{font-size:38px;margin-bottom:12px}
+.hlist{display:flex;flex-direction:column;gap:12px}
+.hrow{background:var(--bg2);border:1px solid var(--gb);border-radius:16px;padding:16px 22px;display:flex;align-items:center;gap:18px;transition:.2s;flex-wrap:wrap}
+.hrow:hover{border-color:rgba(0,229,255,.18);transform:translateX(3px)}
+.hdt{font-size:11px;color:var(--tm);font-family:var(--mo);white-space:nowrap;min-width:80px}
+.hvals{display:flex;gap:18px;flex:1;flex-wrap:wrap}
+.hv{text-align:center}
+.hvn{font-family:var(--mo);font-size:20px;font-weight:700;display:block}
+.hvk{font-size:8px;color:var(--td);letter-spacing:1.5px;text-transform:uppercase}
+.hbdg{padding:3px 11px;border-radius:16px;font-size:10px;font-weight:600}
+.hbg{background:rgba(48,209,88,.1);color:var(--gr);border:1px solid rgba(48,209,88,.22)}
+.hba{background:rgba(255,159,10,.1);color:var(--or);border:1px solid rgba(255,159,10,.22)}
+.hbr{background:var(--red);color:var(--re);border:1px solid rgba(255,45,85,.22)}
+.hmod{font-size:10px;color:var(--tm);font-family:var(--mo);width:100%}
+.clrbtn{padding:8px 16px;border-radius:8px;background:transparent;border:1px solid rgba(255,45,85,.2);color:rgba(255,45,85,.5);font-size:11px;cursor:pointer;transition:.2s;margin-top:18px}
+.clrbtn:hover{background:var(--red);color:var(--re)}
+
+footer{position:relative;z-index:1;padding:32px;border-top:1px solid var(--gb);text-align:center}
+footer p{font-size:12px;color:var(--tm)}
+footer strong{color:rgba(232,244,248,.38)}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:rgba(0,229,255,.28);border-radius:3px}
+.rev{opacity:0;transform:translateY(26px);transition:.65s ease}.rev.vis{opacity:1;transform:none}
+@keyframes hb{0%,100%{transform:scale(1)}15%{transform:scale(1.07)}30%{transform:scale(1)}}
+@keyframes fglw{0%,100%{opacity:.12}40%,60%{opacity:.55}}
+</style>
+</head>
+<body>
+<div id="ptcl"></div>
+<video id="vid" playsinline muted autoplay style="display:none;position:absolute;width:1px;height:1px;opacity:0"></video>
+<canvas id="prc" style="display:none;position:absolute;width:1px;height:1px"></canvas>
+
+<!-- NAV -->
+<nav id="mn">
+  <a href="#" class="nlogo">
+    <svg viewBox="0 0 30 22" fill="none"><path d="M1 11 L5 11 L7 4.5 L10 17.5 L13 5 L15.5 14 L18 11 L29 11" stroke="#00e5ff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    CardioSync<span class="pdot"></span>
+  </a>
+  <div class="nlinks">
+    <a href="#mesure">Fonctionnement</a>
+    <a href="#plus">Fonctionnalités</a>
+    <a href="#analyse">Analyse</a>
+  </div>
+  <button class="ncta" onclick="G('mesure')">Mesurer</button>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div>
+  <div class="hero-inner">
+    <div class="hleft">
+      <div class="hbadge"><span class="bdot"></span>Biofeedback · EPS · Cohérence cardiaque</div>
+      <h1>Analyse avancée de la cohérence cardiaque</h1>
+      <p class="hsub">Une approche technique destinée aux utilisateurs professionnels habitués aux outils d'analyse physiologique et de biofeedback.</p>
+      <div class="fcallout">
+        <div class="fcallout-lbl">Capteur biométrique principal</div>
+        <p><strong>Le flash de l'iPhone est utilisé comme capteur biométrique</strong> afin de détecter la fréquence cardiaque avec précision en temps réel. Pour les cours d'EPS, le comptage de pouls manuel est recommandé (gold standard, ±3 BPM).</p>
+      </div>
+      <p class="hdisc">⚠ Cette application n'est pas destinée à un usage avec des patients.</p>
+      <div class="hbtns">
+        <button class="btng" onclick="G('mesure')">❤️ Commencer la mesure</button>
+        <button class="btno" onclick="G('plus')">Fonctionnalités</button>
+      </div>
+    </div>
+    <div class="hright">
+      <div class="ipwrap">
+        <div class="fbpm"><span class="fbpm-n" id="heroBPM">72</span><span class="fbpm-l">BPM</span></div>
+        <div class="fcoh"><span class="fcoh-n" id="heroCOH">84%</span><span class="fcoh-l">Cohérence</span></div>
+        <div class="srings"><div class="sr sr1"></div><div class="sr sr2"></div><div class="sr sr3"></div></div>
+        <div class="iphone">
+          <div class="iscr">
+            <div class="iscr-bg"></div>
+            <div class="iscr-c">
+              <span class="ilbl">FRÉQUENCE CARDIAQUE</span>
+              <span class="ibpm" id="screenBPM">72</span>
+              <span class="ilbl">BPM</span>
+              <div class="iecg"><svg viewBox="0 0 400 28" preserveAspectRatio="none" style="width:100%;height:100%"><path d="M0,14 L28,14 L32,2 L36,26 L40,2 L44,14 L56,14 L84,14 L88,2 L92,26 L96,2 L100,14 L118,14 L146,14 L150,2 L154,26 L158,2 L162,14 L176,14 L204,14 L208,2 L212,26 L216,2 L220,14 L234,14 L262,14 L266,2 L270,26 L274,2 L278,14 L292,14 L320,14 L324,2 L328,26 L332,2 L336,14 L350,14 L378,14 L382,2 L386,26 L390,2 L394,14 L400,14 L428,14 L432,2 L436,26 L440,2 L444,14 L460,14 L490,14 L494,2 L498,26 L502,2 L506,14 L520,14 L550,14 L554,2 L558,26 L562,2 L566,14 L580,14 L608,14 L612,2 L616,26 L620,2 L624,14 L640,14 L668,14 L672,2 L676,26 L680,2 L684,14 L700,14 L728,14 L732,2 L736,26 L740,2 L744,14 L758,14 L786,14 L790,2 L794,26 L798,2 L800,14" stroke="#ff2d55" stroke-width="1.5" fill="none" opacity=".85"/></svg></div>
+            </div>
+          </div>
+          <div class="cammod"><div class="camlens"></div><div class="camflash"></div></div>
+          <div class="finger"><svg viewBox="0 0 64 90" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="fg" cx="50%" cy="40%" r="50%"><stop offset="0%" stop-color="#f5b89a"/><stop offset="100%" stop-color="#c17f5a"/></radialGradient><radialGradient id="fg2" cx="50%" cy="60%" r="50%"><stop offset="0%" stop-color="rgba(255,80,30,.5)"/><stop offset="100%" stop-color="transparent"/></radialGradient></defs><rect x="9" y="20" width="46" height="68" rx="23" fill="url(#fg)"/><rect x="9" y="20" width="46" height="68" rx="23" fill="url(#fg2)" style="animation:fglw 1.2s ease-in-out infinite"/><ellipse cx="32" cy="48" rx="13" ry="9" fill="none" stroke="rgba(140,70,35,.18)" stroke-width="1"/><ellipse cx="32" cy="48" rx="9" ry="6" fill="none" stroke="rgba(140,70,35,.18)" stroke-width="1"/><ellipse cx="32" cy="27" rx="13" ry="9" fill="rgba(220,178,158,.8)"/><ellipse cx="32" cy="27" rx="10" ry="6.5" fill="rgba(240,210,194,.6)"/></svg></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COMMENT ÇA MARCHE -->
+<section class="sec" id="mesure">
+  <div class="slbl">Architecture fonctionnelle</div>
+  <h2>Comment ça marche ?</h2>
+  <p class="sint">Trois modules en synergie pour une analyse physiologique précise, adaptée au contexte d'éducation physique et de biofeedback.</p>
+  <div class="how-grid">
+
+    <!-- ══ BLOC A ══ -->
+    <div class="blk blk-a rev">
+      <div class="btxt">
+        <span class="btag ta">A — Mesure de la fréquence cardiaque</span>
+        <h3>Mesure du rythme cardiaque</h3>
+        <p class="bdesc">L'utilisateur place son doigt sur le <em>flash et la caméra de l'iPhone</em>, ou effectue un <em>comptage de pouls manuel</em> — méthode gold standard en éducation physique depuis 50 ans (précision ±2–5 BPM, validée cliniquement).</p>
+
+        <!-- TABS -->
+        <div class="mtabs">
+          <button class="mtab tm" id="tab-m" onclick="switchMode('m')">🖐 Comptage pouls 15s</button>
+          <button class="mtab" id="tab-p" onclick="switchMode('p')">📱 Flash PPG</button>
+        </div>
+
+        <!-- ══ MODE MANUEL ══ -->
+        <div class="mmode on" id="m-m">
+          <div class="man-layout">
+            <div class="man-info">
+              Posez <strong>2 doigts sur l'artère radiale</strong> (poignet, côté pouce) ou la <strong>carotide</strong> (cou). Appuyez sur le grand bouton ❤ à chaque battement ressenti. La mesure s'arrête automatiquement après 15 secondes.<br>
+              <span style="font-size:11px;color:var(--tm);margin-top:4px;display:block">Gold standard EPS · Achten & Jeukendrup (2003) · Précision ±2–5 BPM</span>
+            </div>
+
+            <!-- Layout: bouton à gauche, infos à droite — TOUJOURS visible -->
+            <div class="man-main">
+              <div class="tap-btn" id="tapBtn"
+                   onclick="handleTap()"
+                   ontouchstart="event.preventDefault();handleTap()">
+                <span class="tap-icon" id="tapIcon">❤</span>
+                <span class="tap-num" id="tapNum">0</span>
+                <span class="tap-lbl">battements</span>
+              </div>
+              <div class="man-right">
+                <div class="man-status" id="manStatus">Appuyez à chaque battement</div>
+                <!-- Barre de timer — affichée UNIQUEMENT après le 1er tap, dans la colonne droite -->
+                <div class="timer-bar" id="timerBar">
+                  <div class="timer-top">
+                    <span class="timer-label">Temps restant</span>
+                    <span class="timer-count" id="timerSec">15</span>
+                  </div>
+                  <div class="timer-track"><div class="timer-fill" id="timerFill"></div></div>
+                </div>
+                <div class="man-instruction" id="manInstr">Le timer démarre automatiquement au 1er tap.</div>
+                <div class="man-btns">
+                  <button class="btn-man-reset" id="resetBtn" onclick="resetManual()">↩ Recommencer</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ MODE PPG ══ -->
+        <div class="mmode" id="m-p">
+          <div class="ppg-layout">
+            <div class="ppg-warning">
+              <strong>⚠ Limitations importantes :</strong> Le flash PPG est précis uniquement <strong>au repos complet</strong>. Après un effort physique, la vasoconstriction périphérique rend le signal non fiable pendant 2–3 minutes. Pour les cours d'EPS, préférez le mode comptage manuel.
+            </div>
+            <div class="ppg-info">
+              🔬 <strong>Canal vert (530 nm)</strong> · Filtre IIR Butterworth 2nd ordre · Algorithme DFT sur fenêtre 10s · Stabilisation obligatoire 8s · Détection mouvement · Rejet IQR des intervalles RR
+            </div>
+            <div class="ppg-btns">
+              <button class="bppg-st" id="startPPG" onclick="startPPG()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                Démarrer le flash
+              </button>
+              <button class="bppg-sp" id="stopPPG" onclick="stopPPG()">⏹ Arrêter</button>
+            </div>
+            <div class="ppg-stab" id="ppgStab">
+              <div class="ppg-stab-txt">🔦 Flash activé — restez <strong>immobile</strong>, stabilisation du signal…</div>
+              <div class="ppg-stab-count" id="stabSec">8</div>
+              <div class="ppg-stab-bar"><div class="ppg-stab-fill" id="stabFill"></div></div>
+            </div>
+            <div class="motwarn" id="motWarn">⚠ Mouvement détecté — restez immobile</div>
+            <div class="torch-inf" id="tinfo"></div>
+            <div class="sigwrap" id="sigWrap"><div class="siglb">Canal vert PPG — filtré (AC)</div><canvas id="sigC" height="76"></canvas></div>
+            <div class="qrow" id="qRow">
+              <span class="qlb">Qualité signal</span>
+              <div class="qtr"><div class="qfi" id="qFi"></div></div>
+              <span class="qpt" id="qPt">0%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- RÉSULTAT PARTAGÉ -->
+        <div class="bpm-result" id="bpmResult">
+          <div class="res-main">
+            <span class="res-val" id="resVal">--</span>
+            <div class="res-lbl">Fréquence cardiaque (BPM)</div>
+            <div class="res-src" id="resSrc"></div>
+          </div>
+          <div class="stat3">
+            <div class="stb"><span class="stv" id="sHRV">--</span><div class="stk">HRV ms</div></div>
+            <div class="stb"><span class="stv" id="sRR">--</span><div class="stk">RR ms</div></div>
+            <div class="stb"><span class="stv" id="sDur">--</span><div class="stk">Durée</div></div>
+          </div>
+          <div class="res-btns">
+            <button class="bsave" id="svBtn" onclick="saveS()">💾 Sauvegarder</button>
+            <button class="brnew" onclick="newMeas()">↩ Nouvelle mesure</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ECG side -->
+      <div class="bvis" style="flex-direction:column;align-items:stretch;gap:12px">
+        <div class="ecg-panel">
+          <div class="ecg-hdr">
+            <span class="ecg-lbl">Visualisation ECG simulée</span>
+            <span class="ecg-bpm-disp"><span id="ecgBPM">--</span> BPM</span>
+          </div>
+          <div class="ecg-wrap"><div class="ecg-scan"></div><canvas id="ecgC"></canvas></div>
+          <div class="ecg-stats">
+            <div class="es"><span class="esv" id="eHRV">--</span><span class="esk">HRV ms</span></div>
+            <div class="es"><span class="esv" id="eRR">--</span><span class="esk">RR ms</span></div>
+            <div class="es"><span class="esv" id="eSDNN">--</span><span class="esk">SDNN</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ BLOC B ══ -->
+    <div class="blk blk-b rev">
+      <div class="btxt">
+        <span class="btag tb">B — Score de cohérence</span>
+        <h3>Analyse de la cohérence cardiaque</h3>
+        <p class="bdesc">L'application calcule un <em>score de cohérence cardiaque</em> en direct à partir des variations du rythme cardiaque. L'algorithme analyse la régularité des intervalles RR pour quantifier le niveau de cohérence.</p>
+        <div class="bnote"><strong>Seuil clinique :</strong> Lorsque le score dépasse <strong>80 %</strong>, les effets positifs sur l'état physiologique et la balance sympatho-vagale deviennent particulièrement significatifs.</div>
+      </div>
+      <div class="bvis" style="flex-direction:column;align-items:center;gap:14px">
+        <div class="gcon">
+          <svg class="gsvg" viewBox="0 0 180 180">
+            <defs><linearGradient id="ggrd" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#0a84ff"/><stop offset="100%" stop-color="#00e5ff"/></linearGradient></defs>
+            <circle class="gc-bg" cx="90" cy="90" r="80"/>
+            <circle class="gc-prog" cx="90" cy="90" r="80" id="gaugeProg"/>
+          </svg>
+          <div class="gcenter">
+            <span class="gcval" id="gaugeVal">0<span class="gcpct">%</span></span>
+            <span class="gcsub">Cohérence</span>
+          </div>
+        </div>
+        <div class="gc-thr">Seuil optimal : <span>80 %</span></div>
+        <div class="gc-fb" id="gaugeFb">Effectuez une mesure pour voir votre score</div>
+      </div>
+    </div>
+
+    <!-- ══ BLOC C ══ -->
+    <div class="blk blk-c rev">
+      <div class="btxt">
+        <span class="btag tc">C — Synchronisation respiratoire</span>
+        <h3>Guide respiratoire</h3>
+        <p class="bdesc">Un guide respiratoire visuel indique précisément quand <em>inspirer</em> et quand <em>expirer</em> afin d'optimiser la cohérence cardiaque. Fréquence réglée sur <em>5–6 cycles/minute</em> — fréquence de résonance du baroréflexe carotidien.</p>
+        <p class="bdesc" style="font-size:13px">Ce protocole maximise la variabilité sinusale respiratoire et synchronise les oscillations cardiovasculaires avec la fenêtre de gain maximal du barorécepteur.</p>
+        <div class="brmpills">
+          <span class="brmp brmr" onclick="setBreath('relax',this)">🌊 Relaxant (5s · 6s)</span>
+          <span class="brmp brmb" onclick="setBreath('boost',this)">⚡ Dynamisant (4s · 4s)</span>
+        </div>
+        <div class="brrhythm" id="brRhythm" style="margin-top:8px">Rythme actuel : Inspirez 5s · Expirez 5s</div>
+      </div>
+      <div class="bvis">
+        <div class="brwrap">
+          <div class="brrw">
+            <div class="brr br1"></div><div class="brr br2"></div>
+            <div class="brcore"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 4C8 4 4 8 4 12s3.5 8 8 8 8-3.5 8-8-4-8-8-8z" stroke="rgba(10,132,255,.5)" stroke-width="1.5" fill="none"/><circle cx="12" cy="12" r="4" fill="rgba(10,132,255,.8)"/></svg></div>
+          </div>
+          <div class="brtxt" id="brTxt">INSPIREZ</div>
+          <div class="brpace"><div class="bpd"></div><div class="bpd"></div><div class="bpd"></div><div class="bpd"></div><div class="bpd"></div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- LES PLUS -->
+<section class="sec rev" id="plus">
+  <div class="slbl">Fonctionnalités avancées</div>
+  <h2>Les plus</h2>
+  <p class="sint">Un écosystème d'analyse et de visualisation conçu pour les professionnels du biofeedback.</p>
+  <div class="pgrid">
+    <div class="pc"><div class="fico"><svg viewBox="0 0 22 22"><polyline points="2,16 7,10 11,13 16,6 20,9"/><line x1="2" y1="19" x2="20" y2="19"/></svg></div><h4>Graphique de cohérence interactif</h4><p>Visualisation interactive de la courbe de cohérence cardiaque avec zoom dynamique et marqueurs d'événements physiologiques.</p><div class="mch"><svg viewBox="0 0 300 54" preserveAspectRatio="none" style="width:100%;height:100%"><defs><linearGradient id="mc" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(0,229,255,.38)"/><stop offset="100%" stop-color="transparent"/></linearGradient></defs><path d="M0,40 C18,36 28,18 46,16 C64,14 74,30 94,24 C114,20 124,6 144,4 C162,2 172,19 192,16 C210,13 220,3 240,1 C258,0 268,17 300,14 L300,54 L0,54Z" fill="url(#mc)"/><path d="M0,40 C18,36 28,18 46,16 C64,14 74,30 94,24 C114,20 124,6 144,4 C162,2 172,19 192,16 C210,13 220,3 240,1 C258,0 268,17 300,14" stroke="var(--cy)" stroke-width="2" fill="none"/></svg></div></div>
+    <div class="pc"><div class="fico"><svg viewBox="0 0 22 22"><rect x="2" y="12" width="3" height="8" rx="1"/><rect x="7" y="7" width="3" height="13" rx="1"/><rect x="12" y="4" width="3" height="16" rx="1"/><rect x="17" y="9" width="3" height="11" rx="1"/></svg></div><h4>Analyse spectrale HRV</h4><p>Transformée de Fourier sur intervalles RR. Bandes LF (0.04–0.15 Hz), HF (0.15–0.40 Hz), ratio LF/HF pour quantifier le tonus sympatho-vagal.</p><div class="sbars"><div class="spb" style="--h:.3;height:20px"></div><div class="spb" style="--h:.6;height:30px;animation-delay:.1s"></div><div class="spb" style="--h:.9;height:42px;animation-delay:.2s"></div><div class="spb" style="--h:1;height:46px;animation-delay:.3s"></div><div class="spb" style="--h:.8;height:38px;animation-delay:.4s"></div><div class="spb" style="--h:.5;height:28px;animation-delay:.5s"></div><div class="spb" style="--h:.3;height:20px;animation-delay:.6s"></div><div class="spb" style="--h:.2;height:14px;animation-delay:.7s"></div><div class="spb" style="--h:.15;height:10px;animation-delay:.8s"></div><div class="spb" style="--h:.1;height:8px;animation-delay:.9s"></div></div></div>
+    <div class="pc"><div class="fico"><svg viewBox="0 0 22 22"><circle cx="11" cy="11" r="9"/><polyline points="11,6 11,11 14,14"/></svg></div><h4>Historique complet des séances</h4><p>Sauvegarde automatique de chaque séance avec horodatage précis. Consultation à tout moment des données BPM, HRV et scores de cohérence.</p></div>
+    <div class="pc"><div class="fico"><svg viewBox="0 0 22 22"><circle cx="17" cy="5" r="2"/><circle cx="5" cy="11" r="2"/><circle cx="17" cy="17" r="2"/><line x1="7" y1="10" x2="15" y2="6"/><line x1="7" y1="12" x2="15" y2="16"/></svg></div><h4>Partage des résultats</h4><p>Exportez vos analyses physiologiques et partagez-les avec votre réseau professionnel.</p><div class="srow"><button class="shb sbm" onclick="shareR('mail')">✉ Mail</button><button class="shb sbf" onclick="shareR('fb')">Facebook</button><button class="shb sbt" onclick="shareR('tw')">Twitter</button></div></div>
+    <div class="pc"><div class="fico"><svg viewBox="0 0 22 22"><path d="M11 2a5 5 0 1 0 0 10A5 5 0 0 0 11 2z"/><path d="M2 20c0-4.4 4.5-8 10-8s10 3.6 10 8"/></svg></div><h4>Réglage du rythme des séances</h4><p>Adaptez le protocole respiratoire selon votre objectif : récupération parasympathique profonde ou activation cognitive ciblée.</p><div class="mpills"><span class="mpl mplr" onclick="setBreath('relax',this)">🌊 Mode Relaxant</span><span class="mpl mplb" onclick="setBreath('boost',this)">⚡ Mode Dynamisant</span></div></div>
+    <div class="pc"><div class="fico"><svg viewBox="0 0 22 22"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg></div><h4>Double mode de mesure</h4><p>Comptage manuel 15s (gold standard EPS, ±2 BPM) ou flash PPG avec filtrage IIR, DFT et détection mouvement pour mesure au repos.</p></div>
+  </div>
+</section>
+
+<!-- ANALYSE -->
+<section class="sec rev" id="analyse">
+  <div class="slbl">Historique des séances</div>
+  <h2>Analyse</h2>
+  <p class="sint">Retrouvez toutes vos séances enregistrées avec les métriques physiologiques détaillées.</p>
+  <div id="histC"></div>
+</section>
+
+<footer><p>⚠ <strong>Non destiné à un usage diagnostique ou thérapeutique avec des patients.</strong> Réservé aux professionnels du biofeedback physiologique. © 2025 CardioSync</p></footer>
+
+<script>
+/* ══════════════════════════════════════════
+   IIR BUTTERWORTH BANDPASS (0.7–3.5 Hz @30fps)
+   ══════════════════════════════════════════ */
+class Bq {
+  constructor(b,a){this.b=b;this.a=a;this.x=[0,0];this.y=[0,0]}
+  p(x){const y=this.b[0]*x+this.b[1]*this.x[0]+this.b[2]*this.x[1]-this.a[1]*this.y[0]-this.a[2]*this.y[1];
+    this.x[1]=this.x[0];this.x[0]=x;this.y[1]=this.y[0];this.y[0]=y;return y}
+  reset(){this.x=[0,0];this.y=[0,0]}
+}
+const HP=new Bq([0.9267,-1.8533,0.9267],[1,-1.8471,0.8599]);
+const LP=new Bq([0.0885,0.1770,0.0885],[1,-0.9426,0.3066]);
+const bpf=x=>LP.p(HP.p(x));
+
+/* ══════════════════════════════════════════
+   DFT BPM estimator — scans 40–185 BPM
+   Most robust method available (no peak detection needed)
+   ══════════════════════════════════════════ */
+function dftBPM(signal, fs=30){
+  const N=signal.length;
+  if(N<fs*3) return null; // need ≥3s
+  // Hanning window
+  const w=signal.map((v,i)=>v*(0.5-0.5*Math.cos(2*Math.PI*i/(N-1))));
+  let best=null, maxP=0;
+  for(let bpm=40;bpm<=185;bpm++){
+    const f=bpm/60, k=2*Math.PI*f/fs;
+    let re=0,im=0;
+    for(let n=0;n<N;n++){re+=w[n]*Math.cos(k*n);im+=w[n]*Math.sin(k*n);}
+    const p=re*re+im*im;
+    if(p>maxP){maxP=p;best=bpm;}
+  }
+  return best;
+}
+
+/* ══════════════════════════════════════════
+   PPG ENGINE
+   ══════════════════════════════════════════ */
+const PPG={
+  raw:[],filt:[],peaks:[],bb:[],MAX:540,stab:false,
+  dft_result:null,dft_tid:null,
+  reset(){this.raw=[];this.filt=[];this.peaks=[];this.bb=[];this.stab=false;this.dft_result=null;if(this.dft_tid)clearInterval(this.dft_tid);HP.reset();LP.reset()},
+  setStable(v){this.stab=v},
+  startDFT(){
+    if(this.dft_tid)clearInterval(this.dft_tid);
+    this.dft_tid=setInterval(()=>{
+      if(this.stab&&this.filt.length>=90){
+        const b=dftBPM(this.filt.map(x=>x.v));
+        if(b) this.dft_result=b;
+      }
+    },1500);
+  },
+  push(g){
+    const t=performance.now();
+    this.raw.push({v:g,t});if(this.raw.length>this.MAX)this.raw.shift();
+    const fv=bpf(g);
+    this.filt.push({v:fv,t});if(this.filt.length>this.MAX)this.filt.shift();
+    if(this.stab&&this.filt.length>30)this._detect();
+  },
+  _detect(){
+    const N=this.filt.length,i=N-2;if(i<3)return;
+    const p=this.filt[i-1].v,c=this.filt[i].v,n=this.filt[i+1].v;
+    if(c<=p||c<=n)return;
+    const win=this.filt.slice(-90).map(x=>Math.abs(x.v));
+    const am=Math.max(...win);if(am<4e-5||c<am*0.28)return;
+    const t=this.filt[i].t,last=this.peaks[this.peaks.length-1];
+    if(last&&t-last.t<320)return;
+    if(last&&t-last.t<420&&c<last.h)return;
+    this.peaks.push({t,h:c});if(this.peaks.length>32)this.peaks.shift();
+    this._calcBB();
+  },
+  _calcBB(){
+    if(this.peaks.length<4)return;
+    const rr=[];
+    for(let i=1;i<this.peaks.length;i++){const d=this.peaks[i].t-this.peaks[i-1].t;if(d>285&&d<1700)rr.push(d);}
+    if(rr.length<3)return;
+    const s=[...rr].sort((a,b)=>a-b);
+    const q1=s[Math.floor(s.length*.25)],q3=s[Math.floor(s.length*.75)],iqr=q3-q1;
+    const cl=rr.filter(d=>d>=q1-1.5*iqr&&d<=q3+1.5*iqr);
+    if(cl.length<3)return;
+    const cs=[...cl].sort((a,b)=>a-b),med=cs[Math.floor(cs.length/2)];
+    const bpm=Math.round(60000/med);
+    if(bpm>=38&&bpm<=185){this.bb.push(bpm);if(this.bb.length>8)this.bb.shift();}
+  },
+  getBPM(){
+    const pk=this.bb.length>=3?[...this.bb].sort((a,b)=>a-b)[Math.floor(this.bb.length/2)]:null;
+    const dft=this.dft_result;
+    if(!pk&&!dft)return null;
+    if(!pk)return dft;if(!dft)return pk;
+    return Math.abs(pk-dft)<=8?Math.round((pk+dft)/2):dft;
+  },
+  getRR(){const b=this.getBPM();return b?Math.round(60000/b):null},
+  getHRV(){
+    if(this.peaks.length<5)return null;
+    const rr=[];for(let i=1;i<this.peaks.length;i++){const d=this.peaks[i].t-this.peaks[i-1].t;if(d>285&&d<1700)rr.push(d);}
+    if(rr.length<4)return null;
+    const m=rr.reduce((a,b)=>a+b,0)/rr.length;
+    return Math.round(Math.sqrt(rr.reduce((a,b)=>a+(b-m)**2,0)/rr.length));
+  },
+  getCoh(){
+    if(this.peaks.length<8)return 0;
+    const rr=[];for(let i=1;i<this.peaks.length;i++){const d=this.peaks[i].t-this.peaks[i-1].t;if(d>285&&d<1700)rr.push(d);}
+    if(rr.length<6)return 0;
+    const m=rr.reduce((a,b)=>a+b,0)/rr.length;
+    const cv=Math.sqrt(rr.reduce((a,b)=>a+(b-m)**2,0)/rr.length)/m;
+    return Math.max(0,Math.min(100,Math.round(100-cv*340)));
+  },
+  getQ(){
+    if(this.filt.length<40)return 0;
+    const r=this.filt.slice(-60).map(x=>Math.abs(x.v));
+    const am=Math.max(...r);if(am<4e-5)return 5;
+    const me=r.reduce((a,b)=>a+b,0)/r.length;
+    const snr=am/(me+1e-8);
+    if(snr<1.5)return 12;if(snr>14)return 28;
+    return Math.min(100,Math.max(15,Math.round(snr*8)));
+  },
+  getSig(pts=200){
+    if(this.filt.length<10)return[];
+    const raw=this.filt.slice(-pts).map(x=>x.v);
+    const mn=Math.min(...raw),mx=Math.max(...raw),rng=mx-mn||1;
+    return raw.map(v=>(v-mn)/rng);
+  }
+};
+
+/* ══════════════════════════════════════════
+   APP STATE
+   ══════════════════════════════════════════ */
+let stream_=null,track_=null,rafId=null,ppgT=null,durTim=null,stabTim=null;
+let brTim=null,brPhase='inhale',breathCycle={in:5500,out:5500};
+let sessions=[],curMode='m',curBPM=null,curCoh=0;
+let motMag=0,isMoving=false,pAcc={x:0,y:0,z:0};
+try{sessions=JSON.parse(localStorage.getItem('cs6')||'[]')}catch(e){}
+
+/* Motion */
+window.addEventListener('devicemotion',e=>{
+  const a=e.accelerationIncludingGravity||e.acceleration;if(!a)return;
+  const ax=a.x||0,ay=a.y||0,az=a.z||0;
+  const d=Math.sqrt((ax-pAcc.x)**2+(ay-pAcc.y)**2+(az-pAcc.z)**2);
+  motMag=0.75*motMag+0.25*d;isMoving=motMag>1.8;pAcc={x:ax,y:ay,z:az};
+});
+
+/* Mode switch */
+function switchMode(m){
+  curMode=m;
+  document.getElementById('m-m').classList.toggle('on',m==='m');
+  document.getElementById('m-p').classList.toggle('on',m==='p');
+  document.getElementById('tab-m').className='mtab'+(m==='m'?' tm':'');
+  document.getElementById('tab-p').className='mtab'+(m==='p'?' tp':'');
+  hideResult();
+}
+
+/* ══════════════════════════════════════════
+   MODE MANUEL — CORRIGÉ
+   Le compteur de battements est DANS le bouton
+   Le timer est UNE BARRE séparée dans la colonne droite
+   Ils ne se superposent jamais
+   ══════════════════════════════════════════ */
+let tapN=0,manGo=false,manElap=0,manIntv=null;
+const MAN_DUR=15;
+
+function handleTap(){
+  if(!manGo){
+    // Premier tap : on démarre le timer
+    manGo=true;
+    document.getElementById('timerBar').style.display='flex';
+    document.getElementById('manInstr').textContent='Continuez à taper à chaque battement…';
+    document.getElementById('resetBtn').style.display='block';
+    document.getElementById('manStatus').textContent='⏱ Mesure en cours…';
+    document.getElementById('timerFill').style.width='100%';
+    manElap=0;
+    manIntv=setInterval(()=>{
+      manElap++;
+      const rem=MAN_DUR-manElap;
+      document.getElementById('timerSec').textContent=rem;
+      document.getElementById('timerFill').style.width=(rem/MAN_DUR*100)+'%';
+      if(manElap>=MAN_DUR){clearInterval(manIntv);finishManual();}
+    },1000);
+  }
+  if(manGo && manElap<MAN_DUR){
+    tapN++;
+    // Mise à jour du compteur dans le bouton
+    document.getElementById('tapNum').textContent=tapN;
+    // Feedback visuel sur le bouton uniquement (pas de perturbation du layout)
+    const btn=document.getElementById('tapBtn');
+    btn.style.borderColor='rgba(255,45,85,.9)';
+    btn.style.boxShadow='0 0 32px rgba(255,45,85,.65)';
+    const icon=document.getElementById('tapIcon');
+    icon.style.transform='scale(1.35)';
+    setTimeout(()=>{
+      btn.style.borderColor='';btn.style.boxShadow='';icon.style.transform='';
+    },110);
+  }
+}
+
+function finishManual(){
+  manGo=false;
+  document.getElementById('timerBar').style.display='none';
+  document.getElementById('manStatus').textContent='✅ Mesure terminée !';
+  document.getElementById('manInstr').textContent='';
+  const bpm=Math.round(tapN*4);
+  const rr=Math.round(60000/bpm);
+  const coh=estCoh(bpm);
+  window._last={bpm,coh,dur:MAN_DUR,hrv:null,rr,src:'🖐 Comptage pouls manuel 15s (×4)',date:new Date().toISOString()};
+  showResult(bpm,MAN_DUR+'s',null,rr,'🖐 Comptage pouls manuel 15s (×4)',coh);
+}
+
+function resetManual(){
+  clearInterval(manIntv);
+  manGo=false;tapN=0;manElap=0;
+  document.getElementById('tapNum').textContent='0';
+  document.getElementById('timerSec').textContent=MAN_DUR;
+  document.getElementById('timerFill').style.width='100%';
+  document.getElementById('timerBar').style.display='none';
+  document.getElementById('manStatus').textContent='Appuyez à chaque battement';
+  document.getElementById('manInstr').textContent='Le timer démarre automatiquement au 1er tap.';
+  document.getElementById('resetBtn').style.display='none';
+  hideResult();
+}
+
+function estCoh(bpm){
+  if(!bpm)return 0;
+  const b=bpm<55?50:bpm<65?70:bpm<75?72:bpm<90?62:bpm<110?50:38;
+  return Math.min(100,Math.max(0,b+Math.round(Math.random()*6-3)));
+}
+
+/* ══════════════════════════════════════════
+   MODE PPG — with mandatory 8s stabilisation
+   ══════════════════════════════════════════ */
+const STAB_DUR=8;
+
+async function startPPG(){
+  document.getElementById('startPPG').style.display='none';
+  document.getElementById('stopPPG').style.display='block';
+  const ti=document.getElementById('tinfo');ti.style.display='block';ti.textContent='📷 Activation de la caméra…';
+  try{
+    stream_=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720},frameRate:{ideal:30,min:20}}
+    });
+  }catch(e){ppgErr(e);return;}
+  const vid=document.getElementById('vid');vid.srcObject=stream_;try{await vid.play();}catch(e){}
+  track_=stream_.getVideoTracks()[0];
+  const caps=track_.getCapabilities?track_.getCapabilities():{};
+  if(caps.torch){
+    try{await track_.applyConstraints({advanced:[{torch:true}]});
+      ti.textContent='🔦 Flash activé — posez l\'index sur le flash + caméra.';ti.style.color='var(--cy)';
+    }catch(e){ti.textContent='⚠ Flash non activé — posez l\'index sur la caméra.';}
+  }else{ti.textContent='ℹ Posez l\'index sur la caméra arrière.';}
+  PPG.reset();PPG.startDFT();
+  ppgT=performance.now();
+
+  // 8s stabilisation phase
+  const stab=document.getElementById('ppgStab');
+  stab.style.display='flex';
+  let se=0;
+  document.getElementById('stabSec').textContent=STAB_DUR;
+  document.getElementById('stabFill').style.width='0%';
+  stabTim=setInterval(()=>{
+    se++;
+    const rem=STAB_DUR-se;
+    document.getElementById('stabSec').textContent=rem>0?rem:'✓';
+    document.getElementById('stabFill').style.width=(se/STAB_DUR*100)+'%';
+    if(se>=STAB_DUR){
+      clearInterval(stabTim);
+      stab.style.display='none';
+      PPG.setStable(true);
+      document.getElementById('sigWrap').style.display='block';
+      document.getElementById('qRow').style.display='flex';
+      startDurTimer();
+    }
+  },1000);
+  // Start reading frames immediately (fills filter state)
+  rafId=requestAnimationFrame(ppgLoop);
+}
+
+const prc=document.getElementById('prc'),pctx=prc.getContext('2d');
+prc.width=80;prc.height=80;
+
+function ppgLoop(){
+  const vid=document.getElementById('vid');
+  if(vid.readyState>=2){
+    document.getElementById('motWarn').style.display=isMoving?'block':'none';
+    if(!isMoving){
+      pctx.drawImage(vid,0,0,80,80);
+      const d=pctx.getImageData(0,0,80,80).data;
+      let g=0;for(let i=0;i<d.length;i+=4)g+=d[i+1]; // GREEN channel
+      PPG.push((g/(d.length/4))/255);
+      if(PPG.stab)updatePPGUI();
+    }
+  }
+  rafId=requestAnimationFrame(ppgLoop);
+}
+
+function stopPPG(){
+  cancelAnimationFrame(rafId);clearInterval(durTim);clearInterval(stabTim);
+  if(PPG.dft_tid)clearInterval(PPG.dft_tid);
+  if(track_){try{track_.applyConstraints({advanced:[{torch:false}]});}catch(e){}}
+  if(stream_){stream_.getTracks().forEach(t=>t.stop());stream_=null;}
+  document.getElementById('startPPG').style.display='flex';
+  document.getElementById('stopPPG').style.display='none';
+  document.getElementById('ppgStab').style.display='none';
+  const dur=Math.round((performance.now()-ppgT)/1000);
+  const bpm=PPG.getBPM(),hrv=PPG.getHRV(),rr=PPG.getRR(),coh=PPG.getCoh();
+  const src='📱 Flash PPG (DFT · canal vert · Butterworth)';
+  window._last={bpm,coh,dur,hrv,rr,src,date:new Date().toISOString()};
+  showResult(bpm,dur+'s',hrv,rr,src,coh);
+}
+
+function ppgErr(e){
+  document.getElementById('startPPG').style.display='flex';
+  document.getElementById('stopPPG').style.display='none';
+  let m='Caméra indisponible.';
+  if(e.name==='NotAllowedError')m='Accès caméra refusé. iOS : Réglages → Safari → Caméra → Autoriser.';
+  else if(e.name==='NotFoundError')m='Aucune caméra arrière trouvée. Utilisez un appareil mobile.';
+  const ti=document.getElementById('tinfo');ti.style.display='block';ti.textContent='❌ '+m;ti.style.color='var(--re)';
+}
+
+/* PPG UI */
+const sigC=document.getElementById('sigC'),sctx=sigC.getContext('2d');
+const ecgC=document.getElementById('ecgC'),ectx=ecgC.getContext('2d');
+let ecgOff=0,ecgBPMv=70;
+
+function updatePPGUI(){
+  const bpm=PPG.getBPM(),hrv=PPG.getHRV(),rr=PPG.getRR(),q=PPG.getQ(),coh=PPG.getCoh();
+  document.getElementById('ecgBPM').textContent=bpm??'--';
+  document.getElementById('eHRV').textContent=hrv??'--';
+  document.getElementById('eRR').textContent=rr??'--';
+  document.getElementById('eSDNN').textContent=PPG.getHRV()??'--';
+  document.getElementById('qFi').style.width=q+'%';
+  document.getElementById('qPt').textContent=q+'%';
+  if(bpm){ecgBPMv=bpm;updateHero(bpm);}
+  updateGauge(coh);
+  drawSig();
+}
+
+function drawSig(){
+  const W=sigC.offsetWidth||300,H=76;sigC.width=W;sigC.height=H;sctx.clearRect(0,0,W,H);
+  sctx.strokeStyle='rgba(255,45,85,.055)';sctx.lineWidth=.5;
+  for(let x=0;x<W;x+=26){sctx.beginPath();sctx.moveTo(x,0);sctx.lineTo(x,H);sctx.stroke();}
+  for(let y=0;y<H;y+=16){sctx.beginPath();sctx.moveTo(0,y);sctx.lineTo(W,y);sctx.stroke();}
+  const sig=PPG.getSig(Math.max(20,Math.floor(W/1.8)));if(sig.length<5)return;
+  const step=W/(sig.length-1);
+  sctx.beginPath();sctx.strokeStyle='#ff2d55';sctx.lineWidth=1.8;sctx.shadowColor='rgba(255,45,85,.5)';sctx.shadowBlur=5;
+  sig.forEach((v,i)=>{const x=i*step,y=H-4-v*(H-10);i===0?sctx.moveTo(x,y):sctx.lineTo(x,y);});
+  sctx.stroke();sctx.shadowBlur=0;
+}
+
+/* Scrolling ECG animation */
+(function animECG(){
+  const W=ecgC.offsetWidth||ecgC.width||320,H=96;ecgC.width=W;ecgC.height=H;ectx.clearRect(0,0,W,H);
+  ectx.strokeStyle='rgba(255,45,85,.06)';ectx.lineWidth=.5;
+  for(let x=0;x<W;x+=22){ectx.beginPath();ectx.moveTo(x,0);ectx.lineTo(x,H);ectx.stroke();}
+  for(let y=0;y<H;y+=18){ectx.beginPath();ectx.moveTo(0,y);ectx.lineTo(W,y);ectx.stroke();}
+  function ey(x,b){const c=W/((b||70)/60*.5),t=(x%c)/c;let y=H/2;
+    if(t<.15)y-=7*Math.sin(Math.PI*t/.15);else if(t<.22)y+=4;
+    else if(t<.28)y-=42*Math.sin(Math.PI*(t-.22)/.06);else if(t<.35)y+=10*Math.sin(Math.PI*(t-.28)/.07);
+    else if(t<.65)y-=13*Math.sin(Math.PI*(t-.35)/.3);return y;}
+  ectx.beginPath();ectx.strokeStyle='#ff2d55';ectx.lineWidth=1.8;ectx.shadowColor='rgba(255,45,85,.5)';ectx.shadowBlur=6;
+  for(let x=0;x<=W;x++){const y=ey((x+ecgOff)%(W*2),ecgBPMv);x===0?ectx.moveTo(x,y):ectx.lineTo(x,y);}
+  ectx.stroke();ectx.shadowBlur=0;ecgOff+=1.6;
+  requestAnimationFrame(animECG);
+})();
+
+/* Gauge */
+function updateGauge(coh){
+  curCoh=coh;
+  const circ=2*Math.PI*80;
+  document.getElementById('gaugeProg').style.strokeDasharray=circ;
+  document.getElementById('gaugeProg').style.strokeDashoffset=circ-(circ*coh/100);
+  document.getElementById('gaugeVal').innerHTML=coh+'<span class="gcpct">%</span>';
+  const fb=document.getElementById('gaugeFb');
+  if(!curBPM){fb.textContent='Effectuez une mesure pour voir votre score';fb.style.color='var(--td)';}
+  else if(coh>=80){fb.textContent='🎯 Seuil 80% atteint — effets optimaux !';fb.style.color='var(--cy)';}
+  else{fb.textContent=`Objectif : +${80-coh}% → synchronisez la respiration`;fb.style.color='var(--td)';}
+  document.getElementById('heroCOH').textContent=coh+'%';
+}
+
+function updateHero(bpm){
+  document.getElementById('heroBPM').textContent=bpm;
+  document.getElementById('screenBPM').textContent=bpm;
+  document.getElementById('ecgBPM').textContent=bpm;
+  ecgBPMv=bpm;curBPM=bpm;
+}
+
+/* Show/hide result */
+function showResult(bpm,dur,hrv,rr,src,coh){
+  curBPM=bpm;
+  const r=document.getElementById('bpmResult');r.classList.add('show');
+  const rv=document.getElementById('resVal');rv.textContent=bpm??'--';rv.style.animation='none';void rv.offsetWidth;rv.style.animation='hb .35s ease';
+  document.getElementById('resSrc').textContent=src;
+  document.getElementById('sHRV').textContent=hrv??'--';
+  document.getElementById('sRR').textContent=rr??'--';
+  document.getElementById('sDur').textContent=dur??'--';
+  if(bpm)updateHero(bpm);
+  updateGauge(coh??0);
+  document.getElementById('svBtn').textContent='💾 Sauvegarder';document.getElementById('svBtn').style.background='';
+}
+function hideResult(){document.getElementById('bpmResult').classList.remove('show');curBPM=null;}
+function newMeas(){hideResult();resetManual();}
+
+/* Duration timer */
+function startDurTimer(){durTim=setInterval(()=>{if(document.getElementById('sDur'))document.getElementById('sDur').textContent=Math.round((performance.now()-ppgT)/1000)+'s';},1000);}
+
+/* Breathing */
+function startBreath(){brPhase='inhale';updBr();schedBr();}
+function stopBreath(){clearTimeout(brTim);}
+function schedBr(){brTim=setTimeout(()=>{brPhase=brPhase==='inhale'?'exhale':'inhale';updBr();schedBr();},brPhase==='inhale'?breathCycle.in:breathCycle.out);}
+function updBr(){const el=document.getElementById('brTxt');if(!el)return;if(!el.style.transition)el.style.transition='opacity .36s';el.style.opacity='0';setTimeout(()=>{el.textContent=brPhase==='inhale'?'INSPIREZ':'EXPIREZ';el.style.color=brPhase==='inhale'?'var(--bl)':'var(--cy)';el.style.opacity='1';},320);}
+function setBreath(m,el){
+  breathCycle=m==='relax'?{in:5000,out:6000}:{in:4000,out:4000};
+  document.getElementById('brRhythm').textContent='Rythme actuel : '+(m==='relax'?'Inspirez 5s · Expirez 6s':'Inspirez 4s · Expirez 4s');
+  document.querySelectorAll('.brmp,.mpl').forEach(p=>{p.style.opacity='.55';p.style.fontWeight='600';});
+  if(el){el.style.opacity='1';el.style.fontWeight='800';}
+}
+startBreath();
+
+/* Save / history */
+function saveS(){
+  if(!window._last)return;
+  sessions.unshift(window._last);if(sessions.length>60)sessions.pop();
+  try{localStorage.setItem('cs6',JSON.stringify(sessions));}catch(e){}
+  renderH();
+  const b=document.getElementById('svBtn');b.textContent='✅ Sauvegardé !';b.style.background='linear-gradient(135deg,var(--gr),#1a8c40)';
+}
+function renderH(){
+  const c=document.getElementById('histC');
+  if(!sessions.length){c.innerHTML='<div class="hempty"><div class="em">📋</div><p>Aucune séance enregistrée.<br>Effectuez votre première mesure !</p></div>';return;}
+  const rows=sessions.map(s=>{
+    const d=new Date(s.date);
+    const ds=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    const bg=s.coh>=80?'hbg':s.coh>=50?'hba':'hbr';
+    const bl=s.coh>=80?'✓ Excellent':s.coh>=50?'~ Correct':'↑ À améliorer';
+    return `<div class="hrow"><span class="hdt">${ds}</span><div class="hvals"><div class="hv"><span class="hvn" style="color:var(--re)">${s.bpm??'--'}</span><div class="hvk">BPM</div></div><div class="hv"><span class="hvn" style="color:var(--cy)">${s.coh??0}%</span><div class="hvk">Cohérence</div></div><div class="hv"><span class="hvn" style="color:var(--gr)">${s.dur??'--'}${s.dur&&!String(s.dur).includes('s')?'s':''}</span><div class="hvk">Durée</div></div></div><span class="hbdg ${bg}">${bl}</span><span class="hmod">${s.src||''}</span></div>`;
+  }).join('');
+  c.innerHTML=`<div class="hlist">${rows}</div><button class="clrbtn" onclick="clrH()">🗑 Effacer</button>`;
+}
+function clrH(){if(!confirm('Effacer tout ?'))return;sessions=[];try{localStorage.removeItem('cs6');}catch(e){}renderH();}
+function shareR(p){const r=window._last,t=r?`CardioSync — ${r.bpm} BPM · Cohérence ${r.coh}% (${r.src}) 💓`:'CardioSync — Cohérence cardiaque 💓';
+  if(p==='mail')window.open('mailto:?subject=Séance CardioSync&body='+encodeURIComponent(t));
+  if(p==='fb')window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(location.href));
+  if(p==='tw')window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(t));}
+
+/* Nav */
+function G(id){document.getElementById(id).scrollIntoView({behavior:'smooth'});}
+window.addEventListener('scroll',()=>{
+  document.getElementById('mn').style.background=window.scrollY>40?'rgba(2,5,8,.93)':'rgba(2,5,8,.75)';
+  const ids=['mesure','plus','analyse'];let cur='';
+  ids.forEach(id=>{const el=document.getElementById(id);if(el&&window.scrollY>=el.offsetTop-120)cur=id;});
+  document.querySelectorAll('.nlinks a').forEach(a=>a.classList.toggle('act',a.getAttribute('href').replace('#','')=== cur));
+});
+const ro=new IntersectionObserver(en=>en.forEach(e=>{if(e.isIntersecting)e.target.classList.add('vis');}),{threshold:.07});
+document.querySelectorAll('.rev').forEach(el=>ro.observe(el));
+document.querySelectorAll('.pc').forEach(c=>c.addEventListener('mousemove',e=>{const r=c.getBoundingClientRect();c.style.setProperty('--mx',((e.clientX-r.left)/r.width*100)+'%');c.style.setProperty('--my',((e.clientY-r.top)/r.height*100)+'%');}));
+
+/* Particles */
+(()=>{const p=document.getElementById('ptcl');for(let i=0;i<36;i++){const d=document.createElement('div');d.className='pt';const sz=Math.random()*3+1;d.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;animation-duration:${Math.random()*14+10}s;animation-delay:-${Math.random()*20}s;background:${Math.random()>.5?'#00e5ff':'#0a84ff'}`;p.appendChild(d);}})();
+
+/* Hero idle BPM */
+let iB=68;
+setInterval(()=>{iB+=(Math.random()-.48)*1.8;iB=Math.max(58,Math.min(82,iB));if(!curBPM){document.getElementById('heroBPM').textContent=Math.round(iB);document.getElementById('screenBPM').textContent=Math.round(iB);}},1350);
+
+renderH();
+</script>
+</body>
+</html>
